@@ -1,0 +1,71 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  CHEF_PROJET
+  CHEF_CHANTIER
+  SUPERVISEUR
+  RH
+  AGENT
+  CLIENT
+  SOUS_TRAITANT
+}
+
+enum StatutCompte {
+  ACTIF
+  INACTIF
+  SUSPENDU
+  EN_ATTENTE
+}
+
+model User {
+  id            String       @id @default(cuid())
+  email         String       @unique
+  password      String
+  nom           String
+  prenom        String
+  telephone     String?
+  photo         String?
+  role          Role         @default(AGENT)
+  statut        StatutCompte @default(EN_ATTENTE)
+  societeId     String?
+  societe       Societe?     @relation(fields: [societeId], references: [id])
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  lastLoginAt   DateTime?
+  createdById   String?
+
+  @@index([email])
+  @@index([role])
+  @@index([societeId])
+}
+
+model Societe {
+  id          String      @id @default(cuid())
+  nom         String
+  code        String      @unique
+  type        TypeSociete @default(INTERNE)
+  adresse     String?
+  telephone   String?
+  email       String?
+  actif       Boolean     @default(true)
+  users       User[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([code])
+}
+
+enum TypeSociete {
+  INTERNE
+  CLIENT
+  SOUS_TRAITANT
+  FOURNISSEUR
+}
