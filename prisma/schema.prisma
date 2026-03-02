@@ -7,15 +7,26 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// 1. On définit ce qu'est une Société (Minimum)
+model Societe {
+  id   String @id @default(uuid())
+  nom  String
+  users User[]
+}
+
+// 2. On définit l'Utilisateur avec le lien vers la Société
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
   password  String
   nom       String
   prenom    String
-  role      String   // "ADMIN", "CLIENT", etc.
-  statut    String   // "ACTIF", "INACTIF"
+  role      String
+  statut    String
   societeId String?
+  
+  // Le lien manquant qui causait l'erreur
+  societe   Societe? @relation(fields: [societeId], references: [id])
   
   createdAt DateTime @default(now())
 }
