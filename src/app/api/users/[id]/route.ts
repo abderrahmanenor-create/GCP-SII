@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
-export async function GET(req: Request, { params }: { params: { id: string } }) {
+// Correction Next.js 16 : params est maintenant une Promise
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    // On doit attendre (await) les params
+    const { id } = await params;
+
     const user = await db.user.findUnique({
-      where: { id: params.id },
+      where: { id: id }, // On utilise l'id récupéré
       include: {
         habilitations: true,
         epiDistribues: {
