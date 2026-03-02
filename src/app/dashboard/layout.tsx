@@ -11,7 +11,6 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname();
 
-  // Style pour les liens
   const linkStyle = (path: string) => ({
     display: "block",
     padding: "10px 15px",
