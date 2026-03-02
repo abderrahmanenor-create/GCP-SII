@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 
-// Types pour l'affichage
 type Employee = {
   id: string;
   nom: string;
@@ -21,8 +20,8 @@ type Employee = {
   dateFinContrat: string | null;
   indemniteTransport: number | null;
   autreIndemnite: number | null;
-  habilitations: { id: string; nom: string; dateFin: string }[];
-  epiDistribues: { id: string; date: string; epi: { nom: string } }[];
+  habilitations?: { id: string; nom: string; dateFin: string }[]; // Ajout de ? pour optionnel
+  epiDistribues?: { id: string; date: string; epi: { nom: string } }[]; // Ajout de ? pour optionnel
 };
 
 export default function FicheEmployePage() {
@@ -30,8 +29,8 @@ export default function FicheEmployePage() {
   const router = useRouter();
   const [employee, setEmployee] = useState<Employee | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("infos");
 
-  // Charger les données de l'employé
   useEffect(() => {
     if (params.id) {
       fetch(`/api/users/${params.id}`)
@@ -46,8 +45,10 @@ export default function FicheEmployePage() {
   if (loading) return <div style={{ padding: 20 }}>Chargement...</div>;
   if (!employee) return <div style={{ padding: 20 }}>Employé non trouvé.</div>;
 
-  // Onglets (Simple simulation pour l'instant)
-  const [activeTab, setActiveTab] = useState("infos");
+  // Sécurité : si les listes n'existent pas, on prend un tableau vide
+  const habilitations = employee.habilitations || [];
+  const epiDistribues = employee.epiDistribues || [];
+  const initialeNom = employee.nom ? employee.nom[0].toUpperCase() : "?";
 
   return (
     <div style={{ backgroundColor: "white", minHeight: "100vh", color: "black" }}>
@@ -56,7 +57,7 @@ export default function FicheEmployePage() {
         
         {/* Photo */}
         <div style={{ width: 100, height: 100, borderRadius: "50%", background: "#0070f3", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "40px", fontWeight: "bold" }}>
-          {employee.photoUrl ? <img src={employee.photoUrl} alt="Photo" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} /> : employee.nom[0]}
+          {employee.photoUrl ? <img src={employee.photoUrl} alt="Photo" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} /> : initialeNom}
         </div>
 
         {/* Identité */}
@@ -107,12 +108,10 @@ export default function FicheEmployePage() {
           <div style={{ background: "#f9f9f9", padding: 20, borderRadius: 8 }}>
             <h3>Coordonnées</h3>
             <p>Email : {employee.email}</p>
-            <p>Téléphone : (à ajouter en base)</p>
-            <p>Adresse : (à ajouter en base)</p>
           </div>
         )}
 
-        {/* Onglet CONTRAT (La partie importante) */}
+        {/* Onglet CONTRAT */}
         {activeTab === "contrat" && (
           <div style={{ background: "#f9f9f9", padding: 20, borderRadius: 8 }}>
             <h3>Détails du Contrat</h3>
@@ -174,10 +173,10 @@ export default function FicheEmployePage() {
                 </tr>
               </thead>
               <tbody>
-                {employee.habilitations.length === 0 && (
+                {habilitations.length === 0 && (
                   <tr><td colSpan={3} style={{ padding: 10, color: "#888" }}>Aucune habilitation enregistrée.</td></tr>
                 )}
-                {employee.habilitations.map((h) => (
+                {habilitations.map((h) => (
                   <tr key={h.id} style={{ borderBottom: "1px solid #eee" }}>
                     <td style={{ padding: 10 }}>{h.nom}</td>
                     <td style={{ padding: 10 }}>{new Date(h.dateFin).toLocaleDateString()}</td>
@@ -203,10 +202,10 @@ export default function FicheEmployePage() {
                 </tr>
               </thead>
               <tbody>
-                {employee.epiDistribues.length === 0 && (
+                {epiDistribues.length === 0 && (
                   <tr><td colSpan={2} style={{ padding: 10, color: "#888" }}>Aucun EPI distribué.</td></tr>
                 )}
-                {employee.epiDistribues.map((e) => (
+                {epiDistribues.map((e) => (
                   <tr key={e.id} style={{ borderBottom: "1px solid #eee" }}>
                     <td style={{ padding: 10 }}>{new Date(e.date).toLocaleDateString()}</td>
                     <td style={{ padding: 10 }}>{e.epi.nom}</td>
