@@ -7,26 +7,263 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// 1. On définit ce qu'est une Société (Minimum)
+// ==========================================
+// 1. ADMIN & STRUCTURE
+// ==========================================
+
 model Societe {
-  id   String @id @default(uuid())
-  nom  String
-  users User[]
+  id        String   @id @default(uuid())
+  nom       String
+  type      String   // "CLIENT", "SOUS_TRAITANT", "INTERNE"
+  ice       String?
+  users     User[]
+  contrats  Contrat[]
 }
 
-// 2. On définit l'Utilisateur avec le lien vers la Société
+model Contrat {
+  id              String   @id @default(uuid())
+  numero          String   @unique
+  objet           String
+  budget          Float
+  dateDebut       DateTime
+  dateFin         DateTime?
+  statut          String
+  
+  validationRequise Boolean @default(false)
+  
+  clientId        String
+  client          Societe  @relation(fields: [clientId], references: [id])
+  
+  projets         Projet[]
+  factures        Facture[]
+}
+
+model Projet {
+  id          String   @id @default(uuid())
+  nom         String
+  code        String   @unique
+  
+  contratId   String
+  contrat     Contrat  @relation(fields: [contratId], references: [id])
+  
+  zones       Zone[]
+  equipes     Equipe[]
+  couts       CoutProjet[]
+}
+
+model Zone {
+  id          String   @id @default(uuid())
+  nom         String
+  projetId    String
+  projet      Projet   @relation(fields: [projetId], references: [id])
+  
+  feuillesPointage FeuillePointage[]
+  rapports    RapportChantier[]
+  affectations AffectationMateriel[]
+}
+
+model Equipe {
+  id          String   @id @default(uuid())
+  nom         String
+  projetId    String
+  projet      Projet   @relation(fields: [projetId], references: [id])
+  membres     User[]
+}
+
+// ==========================================
+// 2. RH & USERS
+// ==========================================
+
 model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  password      String
+  nom           String
+  prenom        String
+  role          String
+  statut        String
+  createdAt     DateTime @default(now()) // Remis pour éviter la perte de données
+  
+  matricule     String?  @unique
+  cin           String?
+  cnss          String?
+  tauxHoraire   Float?
+  
+  societeId     String?
+  societe       Societe? @relation(fields: [societeId], references: [id])
+  equipeId      String?
+  equipe        Equipe?  @relation(fields: [equipeId], references: [id])
+  
+  habilitations Habilitation[]
+  epiDistribues DistributionEPI[]
+  pointages     LignePointage[]
+}
+
+model Habilitation {
   id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
   nom       String
-  prenom    String
-  role      String
-  statut    String
-  societeId String?
+  dateFin   DateTime
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+// ==========================================
+// 3. POINTAGE
+// ==========================================
+
+model FeuillePointage {
+  id            String   @id @default(uuid())
+  date          DateTime
+  statut        String
+  type          String
   
-  // Le lien manquant qui causait l'erreur
-  societe   Societe? @relation(fields: [societeId], references: [id])
+  totalHeures   Float    @default(0)
+  totalCout     Float    @default(0)
   
-  createdAt DateTime @default(now())
+  valideParId   String?
+  dateValidation DateTime?
+  signatureUrl  String?
+  
+  zoneId        String
+  zone          Zone     @relation(fields: [zoneId], references: [id])
+  
+  lignes        LignePointage[]
+}
+
+model LignePointage {
+  id          String   @id @default(uuid())
+  heureDebut  DateTime
+  heureFin    DateTime
+  heures      Float
+  montant     Float
+  
+  signatureOuvrier String?
+  
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  
+  feuilleId   String
+  feuille     FeuillePointage @relation(fields: [feuilleId], references: [id])
+}
+
+// ==========================================
+// 4. RAPPORTS
+// ==========================================
+
+model RapportChantier {
+  id          String   @id @default(uuid())
+  date        DateTime
+  type        String
+  titre       String
+  description String
+  
+  photos      String[]
+  
+  valideChef  Boolean  @default(false)
+  valideClient Boolean @default(false)
+  
+  zoneId      String
+  zone        Zone     @relation(fields: [zoneId], references: [id])
+  
+  createdAt   DateTime @default(now())
+}
+
+// ==========================================
+// 5. HSE - EPI
+// ==========================================
+
+model EPI {
+  id              String   @id @default(uuid())
+  nom             String
+  reference       String?
+  taille          String?
+  stockInitial    Int      @default(0)
+  seuilAlerte     Int      @default(5)
+  prixUnitaire    Float?
+  
+  mouvements      MouvementEPI[]
+  distributions   DistributionEPI[]
+}
+
+model MouvementEPI {
+  id          String   @id @default(uuid())
+  type        String
+  quantite    Int
+  date        DateTime @default(now())
+  motif       String?
+  
+  epiId       String
+  epi         EPI      @relation(fields: [epiId], references: [id])
+}
+
+model DistributionEPI {
+  id          String   @id @default(uuid())
+  date        DateTime @default(now())
+  quantite    Int      @default(1)
+  etat        String
+  remarque    String?
+  
+  epiId       String
+  epi         EPI      @relation(fields: [epiId], references: [id])
+  
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  
+  signatureRecipisse String?
+}
+
+// ==========================================
+// 6. MATERIEL
+// ==========================================
+
+model Materiel {
+  id              String   @id @default(uuid())
+  nom             String
+  code            String   @unique
+  categorie       String
+  proprietaire    String
+  coutJournalier  Float?
+  prixLocationJour Float?
+  
+  affectations    AffectationMateriel[]
+}
+
+model AffectationMateriel {
+  id            String   @id @default(uuid())
+  dateDebut     DateTime
+  dateFin       DateTime?
+  valideClient  Boolean  @default(false)
+  
+  materielId    String
+  materiel      Materiel @relation(fields: [materielId], references: [id])
+  
+  zoneId        String
+  zone          Zone     @relation(fields: [zoneId], references: [id])
+}
+
+// ==========================================
+// 7. FACTURATION
+// ==========================================
+
+model Facture {
+  id          String   @id @default(uuid())
+  numero      String   @unique
+  date        DateTime @default(now())
+  montantHT   Float
+  montantTTC  Float
+  statut      String
+  
+  contratId   String
+  contrat     Contrat  @relation(fields: [contratId], references: [id])
+}
+
+model CoutProjet {
+  id          String   @id @default(uuid())
+  categorie   String
+  montant     Float
+  date        DateTime @default(now())
+  description String?
+  
+  projetId    String
+  projet      Projet   @relation(fields: [projetId], references: [id])
 }
