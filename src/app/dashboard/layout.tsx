@@ -4,79 +4,114 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
+  const isActive = (path: string) => pathname === path || pathname.startsWith(path + "/");
+
   const linkStyle = (path: string) => ({
-    display: "block",
-    padding: "10px 15px",
-    color: pathname === path ? "white" : "#ccc",
-    backgroundColor: pathname === path ? "#0070f3" : "transparent",
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    padding: "10px 14px",
+    color: isActive(path) ? "white" : "#ccc",
+    backgroundColor: isActive(path) ? "#0070f3" : "transparent",
     textDecoration: "none",
-    marginBottom: "5px",
-    borderRadius: "4px",
+    marginBottom: "4px",
+    borderRadius: "6px",
+    fontSize: "14px",
+    fontWeight: isActive(path) ? "bold" : "normal",
+    transition: "background 0.15s",
   });
+
+  const navLinks = [
+    { href: "/dashboard", label: "Accueil", icon: "🏠", exact: true },
+    { href: "/dashboard/rh", label: "RH & Ouvriers", icon: "👥" },
+    { href: "/dashboard/pointage", label: "Pointage", icon: "⏱️" },
+    { href: "/dashboard/epi", label: "HSE & EPI", icon: "🦺" },
+    { href: "/dashboard/chantier", label: "Chantiers", icon: "🏗️" },
+    { href: "/dashboard/admin", label: "Administration", icon: "⚙️" },
+  ];
 
   return (
     <div style={{ display: "flex", minHeight: "100vh", fontFamily: "Arial, sans-serif" }}>
-      
-      {/* Menu Latéral (Sidebar) */}
-      <aside style={{ 
-        width: "250px", 
-        backgroundColor: "#333", 
-        color: "white", 
-        padding: "20px", 
-        display: "flex", 
-        flexDirection: "column" 
+
+      {/* Sidebar */}
+      <aside style={{
+        width: "240px",
+        backgroundColor: "#1e2432",
+        color: "white",
+        padding: "20px 14px",
+        display: "flex",
+        flexDirection: "column",
+        flexShrink: 0,
       }}>
-        <h2 style={{ textAlign: "center", marginBottom: "30px", borderBottom: "1px solid #555", paddingBottom: "10px" }}>
+        <h2 style={{
+          textAlign: "center",
+          marginBottom: "28px",
+          borderBottom: "1px solid #333",
+          paddingBottom: "14px",
+          fontSize: "18px",
+          letterSpacing: "1px",
+          color: "white",
+        }}>
           GCP-SII
         </h2>
 
         <nav style={{ flex: 1 }}>
-          <Link href="/dashboard" style={linkStyle("/dashboard")}>
-            🏠 Accueil
-          </Link>
-          <Link href="/dashboard/rh" style={linkStyle("/dashboard/rh")}>
-            👥 RH & Ouvriers
-          </Link>
-          <Link href="/dashboard/pointage" style={linkStyle("/dashboard/pointage")}>
-            ⏱️ Pointage
-          </Link>
-          <Link href="/dashboard/epi" style={linkStyle("/dashboard/epi")}>
-            🦺 HSE & EPI
-          </Link>
-          <Link href="/dashboard/chantier" style={linkStyle("/dashboard/chantier")}>
-            🏗️ Chantiers
-          </Link>
+          {navLinks.map((link) => {
+            const active = link.exact
+              ? pathname === link.href
+              : pathname === link.href || pathname.startsWith(link.href + "/");
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  padding: "10px 14px",
+                  color: active ? "white" : "#aab4c4",
+                  backgroundColor: active ? "#0070f3" : "transparent",
+                  textDecoration: "none",
+                  marginBottom: "4px",
+                  borderRadius: "6px",
+                  fontSize: "14px",
+                  fontWeight: active ? "bold" : "normal",
+                }}
+              >
+                <span style={{ fontSize: "16px" }}>{link.icon}</span>
+                {link.label}
+              </Link>
+            );
+          })}
         </nav>
 
-        <button 
+        <button
           onClick={() => signOut({ callbackUrl: "/login" })}
-          style={{ 
-            padding: "10px", 
-            background: "#d9534f", 
-            color: "white", 
-            border: "none", 
+          style={{
+            padding: "10px",
+            background: "#d9534f",
+            color: "white",
+            border: "none",
             cursor: "pointer",
-            borderRadius: "4px"
+            borderRadius: "6px",
+            fontSize: "14px",
+            fontWeight: "bold",
           }}
         >
           Déconnexion
         </button>
       </aside>
 
-      {/* Zone Principale */}
-      <main style={{ 
-        flex: 1, 
-        backgroundColor: "white", 
+      {/* Zone principale */}
+      <main style={{
+        flex: 1,
+        backgroundColor: "#f4f6f9",
         color: "black",
-        padding: "20px",
-        overflowY: "auto"
+        overflowY: "auto",
+        minHeight: "100vh",
       }}>
         {children}
       </main>
