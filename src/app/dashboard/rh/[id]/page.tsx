@@ -3,11 +3,12 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 
-type Employee = {
+type Employe = {
   id: string;
   nom: string;
   prenom: string;
   email: string;
+  telephone: string | null;
   matricule: string | null;
   cin: string | null;
   cnss: string | null;
@@ -15,208 +16,560 @@ type Employee = {
   role: string;
   statut: string;
   tauxHoraire: number | null;
-  typeContrat: string | null;
-  dateDebutContrat: string | null;
-  dateFinContrat: string | null;
+  salaireBase: number | null;
   indemniteTransport: number | null;
   autreIndemnite: number | null;
-  habilitations?: { id: string; nom: string; dateFin: string }[]; // Ajout de ? pour optionnel
-  epiDistribues?: { id: string; date: string; epi: { nom: string } }[]; // Ajout de ? pour optionnel
+  dateDebutContrat: string | null;
+  dateFinContrat: string | null;
+  poste: { id: string; nom: string } | null;
+  typeContrat: { id: string; nom: string } | null;
+  equipe: { id: string; nom: string } | null;
+  societe: { id: string; nom: string } | null;
+  habilitations: { id: string; dateFin: string; statut: string; type: { nom: string } }[];
+  epiDistribues: { id: string; date: string; etat: string; epi: { nom: string } }[];
 };
+
+type Ref = {
+  postes: { id: string; nom: string }[];
+  typesContrat: { id: string; nom: string }[];
+  typesHabilitation: { id: string; nom: string; dureeValiditeMois: number }[];
+};
+
+const ROLES = ["ADMIN", "CHEF_CHANTIER", "SUPERVISEUR", "RH", "OUVRIER", "CLIENT", "SOUS_TRAITANT"];
+const STATUTS = ["ACTIF", "INACTIF", "SUSPENDU"];
 
 export default function FicheEmployePage() {
   const params = useParams();
   const router = useRouter();
-  const [employee, setEmployee] = useState<Employee | null>(null);
+  const [employe, setEmploye] = useState<Employe | null>(null);
+  const [refs, setRefs] = useState<Ref>({ postes: [], typesContrat: [], typesHabilitation: [] });
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("infos");
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState<any>({});
+
+  // Modal ajout référence
+  const [showAddRef, setShowAddRef] = useState<string | null>(null);
+  const [newRefNom, setNewRefNom] = useState("");
+
+  // Modal ajout habilitation
+  const [showAddHab, setShowAddHab] = useState(false);
+  const [newHab, setNewHab] = useState({ typeId: "", dateFin: "" });
 
   useEffect(() => {
-    if (params.id) {
-      fetch(`/api/users/${params.id}`)
-        .then((res) => res.json())
-        .then((data) => {
-          setEmployee(data);
-          setLoading(false);
-        });
-    }
+    fetch("/api/ref")
+      .then((r) => r.json())
+      .then((data) => setRefs(data));
+
+    fetch(`/api/users/${params.id}`)
+      .then((r) => r.json())
+      .then((data) => {
+        setEmploye(data);
+        setForm(data);
+        setLoading(false);
+      });
   }, [params.id]);
 
-  if (loading) return <div style={{ padding: 20 }}>Chargement...</div>;
-  if (!employee) return <div style={{ padding: 20 }}>Employé non trouvé.</div>;
+  const handleSave = async () => {
+    setSaving(true);
+    await fetch(`/api/users/${params.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(form),
+    });
+    const updated = await fetch(`/api/users/${params.id}`).then((r) => r.json());
+    setEmploye(updated);
+    setForm(updated);
+    setEditing(false);
+    setSaving(false);
+  };
 
-  // Sécurité : si les listes n'existent pas, on prend un tableau vide
-  const habilitations = employee.habilitations || [];
-  const epiDistribues = employee.epiDistribues || [];
-  const initialeNom = employee.nom ? employee.nom[0].toUpperCase() : "?";
+  const handleAddRef = async (table: string) => {
+    if (!newRefNom.trim()) return;
+    const res = await fetch("/api/ref", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ table, data: { nom: newRefNom } }),
+    });
+    const newItem = await res.json();
+    setRefs((prev: any) => {
+      const key = table === "poste" ? "postes" : table === "typeContrat" ? "typesContrat" : "typesHabilitation";
+      return { ...prev, [key]: [...prev[key], newItem] };
+    });
+    setNewRefNom("");
+    setShowAddRef(null);
+  };
+
+  const handleAddHabilitation = async () => {
+    if (!newHab.typeId || !newHab.dateFin) return;
+    await fetch("/api/rh/habilitations", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: params.id, ...newHab }),
+    });
+    const updated = await fetch(`/api/users/${params.id}`).then((r) => r.json());
+    setEmploye(updated);
+    setShowAddHab(false);
+    setNewHab({ typeId: "", dateFin: "" });
+  };
+
+  if (loading) return (
+    <div style={{ padding: 40, textAlign: "center", color: "#999" }}>Chargement...</div>
+  );
+
+  if (!employe) return (
+    <div style={{ padding: 40, textAlign: "center", color: "#999" }}>Employé non trouvé.</div>
+  );
+
+  const tabs = [
+    { id: "infos", label: "Informations" },
+    { id: "contrat", label: "Contrat & Coût" },
+    { id: "securite", label: "Sécurité & Habilitations" },
+    { id: "epi", label: "Historique EPI" },
+  ];
+
+  const inputStyle = (editable: boolean) => ({
+    width: "100%",
+    padding: "8px 12px",
+    border: `1px solid ${editable ? "#0070f3" : "#e5e7eb"}`,
+    borderRadius: "6px",
+    fontSize: "14px",
+    background: editable ? "white" : "#f8fafc",
+    color: "#1a1a1a",
+    boxSizing: "border-box" as const,
+  });
+
+  const labelStyle = {
+    fontSize: "11px",
+    fontWeight: "bold" as const,
+    color: "#666",
+    marginBottom: "4px",
+    display: "block",
+  };
 
   return (
-    <div style={{ backgroundColor: "white", minHeight: "100vh", color: "black" }}>
-      {/* Header de la fiche */}
-      <div style={{ background: "#f4f6f8", padding: "20px", borderBottom: "1px solid #ddd", display: "flex", alignItems: "center", gap: "20px" }}>
-        
-        {/* Photo */}
-        <div style={{ width: 100, height: 100, borderRadius: "50%", background: "#0070f3", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "40px", fontWeight: "bold" }}>
-          {employee.photoUrl ? <img src={employee.photoUrl} alt="Photo" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} /> : initialeNom}
+    <div style={{ backgroundColor: "#f4f6f9", minHeight: "100vh" }}>
+
+      {/* Header profil */}
+      <div style={{
+        background: "linear-gradient(135deg, #0070f3, #0050b3)",
+        padding: "24px 28px",
+        color: "white",
+        display: "flex",
+        alignItems: "center",
+        gap: "20px",
+      }}>
+        <div style={{
+          width: 80, height: 80, borderRadius: "50%",
+          background: "rgba(255,255,255,0.2)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: "32px", fontWeight: "bold", flexShrink: 0,
+          border: "3px solid rgba(255,255,255,0.5)",
+        }}>
+          {employe.photoUrl ? (
+            <img src={employe.photoUrl} alt="" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} />
+          ) : (
+            employe.nom[0].toUpperCase()
+          )}
         </div>
-
-        {/* Identité */}
-        <div>
-          <h1 style={{ margin: 0 }}>{employee.nom} {employee.prenom}</h1>
-          <p style={{ margin: "5px 0", color: "#666" }}>
-            {employee.role} • {employee.statut}
+        <div style={{ flex: 1 }}>
+          <h1 style={{ margin: 0, fontSize: "24px", fontWeight: "bold" }}>
+            {employe.nom} {employe.prenom}
+          </h1>
+          <p style={{ margin: "4px 0 0", opacity: 0.85, fontSize: "14px" }}>
+            {employe.poste?.nom || "Poste non défini"} · {employe.role} · {employe.statut}
           </p>
-          <p style={{ margin: "5px 0", fontSize: "14px" }}>
-            Matricule: {employee.matricule || "N/A"} | CIN: {employee.cin || "N/A"} | CNSS: {employee.cnss || "N/A"}
+          <p style={{ margin: "2px 0 0", opacity: 0.7, fontSize: "13px" }}>
+            Matricule: {employe.matricule || "N/A"} | CIN: {employe.cin || "N/A"}
           </p>
         </div>
-
-        <button onClick={() => router.push("/dashboard/rh")} style={{ marginLeft: "auto", padding: "10px", background: "#eee", border: "none", cursor: "pointer" }}>
-          ← Retour à la liste
-        </button>
-      </div>
-
-      {/* Navigation Onglets */}
-      <div style={{ display: "flex", borderBottom: "1px solid #ccc", background: "white" }}>
-        {["infos", "contrat", "securite", "epi"].map((tab) => (
+        <div style={{ display: "flex", gap: "10px" }}>
+          {editing ? (
+            <>
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                style={{
+                  padding: "8px 20px", background: "white", color: "#0070f3",
+                  border: "none", borderRadius: "8px", fontWeight: "bold",
+                  cursor: "pointer", fontSize: "14px",
+                }}
+              >
+                {saving ? "Sauvegarde..." : "✓ Sauvegarder"}
+              </button>
+              <button
+                onClick={() => { setEditing(false); setForm(employe); }}
+                style={{
+                  padding: "8px 20px", background: "rgba(255,255,255,0.2)",
+                  color: "white", border: "1px solid rgba(255,255,255,0.4)",
+                  borderRadius: "8px", cursor: "pointer", fontSize: "14px",
+                }}
+              >
+                Annuler
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() => setEditing(true)}
+              style={{
+                padding: "8px 20px", background: "rgba(255,255,255,0.2)",
+                color: "white", border: "1px solid rgba(255,255,255,0.4)",
+                borderRadius: "8px", cursor: "pointer", fontSize: "14px",
+              }}
+            >
+              ✏️ Modifier
+            </button>
+          )}
           <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
+            onClick={() => router.push("/dashboard/rh")}
             style={{
-              padding: "15px 25px",
-              border: "none",
-              borderBottom: activeTab === tab ? "3px solid #0070f3" : "none",
-              background: "transparent",
-              cursor: "pointer",
-              fontWeight: activeTab === tab ? "bold" : "normal",
-              color: activeTab === tab ? "#0070f3" : "black",
+              padding: "8px 20px", background: "rgba(255,255,255,0.1)",
+              color: "white", border: "1px solid rgba(255,255,255,0.3)",
+              borderRadius: "8px", cursor: "pointer", fontSize: "14px",
             }}
           >
-            {tab === "infos" && "Informations Générales"}
-            {tab === "contrat" && "Contrat & Coût"}
-            {tab === "securite" && "Sécurité & Habilitations"}
-            {tab === "epi" && "Historique EPI"}
+            ← Retour
+          </button>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div style={{ background: "white", borderBottom: "2px solid #e5e7eb", display: "flex" }}>
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            style={{
+              padding: "14px 24px", border: "none", background: "transparent",
+              borderBottom: activeTab === tab.id ? "3px solid #0070f3" : "3px solid transparent",
+              color: activeTab === tab.id ? "#0070f3" : "#666",
+              fontWeight: activeTab === tab.id ? "bold" : "normal",
+              cursor: "pointer", fontSize: "14px",
+            }}
+          >
+            {tab.label}
           </button>
         ))}
       </div>
 
-      {/* Contenu des Onglets */}
-      <div style={{ padding: "20px" }}>
-        
-        {/* Onglet INFOS */}
+      {/* Contenu */}
+      <div style={{ padding: "24px", maxWidth: "900px" }}>
+
+        {/* TAB INFOS */}
         {activeTab === "infos" && (
-          <div style={{ background: "#f9f9f9", padding: 20, borderRadius: 8 }}>
-            <h3>Coordonnées</h3>
-            <p>Email : {employee.email}</p>
+          <div style={{ background: "white", borderRadius: "10px", padding: "24px", boxShadow: "0 1px 6px rgba(0,0,0,0.08)" }}>
+            <h3 style={{ margin: "0 0 20px", fontSize: "16px", fontWeight: "bold", color: "#1a1a1a" }}>
+              Informations Générales
+            </h3>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+              <div>
+                <label style={labelStyle}>NOM</label>
+                <input style={inputStyle(editing)} value={form.nom || ""} onChange={(e) => setForm({ ...form, nom: e.target.value })} disabled={!editing} />
+              </div>
+              <div>
+                <label style={labelStyle}>PRÉNOM</label>
+                <input style={inputStyle(editing)} value={form.prenom || ""} onChange={(e) => setForm({ ...form, prenom: e.target.value })} disabled={!editing} />
+              </div>
+              <div>
+                <label style={labelStyle}>EMAIL</label>
+                <input style={inputStyle(editing)} value={form.email || ""} onChange={(e) => setForm({ ...form, email: e.target.value })} disabled={!editing} />
+              </div>
+              <div>
+                <label style={labelStyle}>TÉLÉPHONE</label>
+                <input style={inputStyle(editing)} value={form.telephone || ""} onChange={(e) => setForm({ ...form, telephone: e.target.value })} disabled={!editing} placeholder="Non renseigné" />
+              </div>
+              <div>
+                <label style={labelStyle}>MATRICULE</label>
+                <input style={inputStyle(editing)} value={form.matricule || ""} onChange={(e) => setForm({ ...form, matricule: e.target.value })} disabled={!editing} placeholder="Non renseigné" />
+              </div>
+              <div>
+                <label style={labelStyle}>CIN</label>
+                <input style={inputStyle(editing)} value={form.cin || ""} onChange={(e) => setForm({ ...form, cin: e.target.value })} disabled={!editing} placeholder="Non renseigné" />
+              </div>
+              <div>
+                <label style={labelStyle}>CNSS</label>
+                <input style={inputStyle(editing)} value={form.cnss || ""} onChange={(e) => setForm({ ...form, cnss: e.target.value })} disabled={!editing} placeholder="Non renseigné" />
+              </div>
+              <div>
+                <label style={labelStyle}>STATUT</label>
+                <select style={inputStyle(editing)} value={form.statut || ""} onChange={(e) => setForm({ ...form, statut: e.target.value })} disabled={!editing}>
+                  {STATUTS.map((s) => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={labelStyle}>RÔLE</label>
+                <select style={inputStyle(editing)} value={form.role || ""} onChange={(e) => setForm({ ...form, role: e.target.value })} disabled={!editing}>
+                  {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={labelStyle}>POSTE</label>
+                <div style={{ display: "flex", gap: "8px" }}>
+                  <select
+                    style={{ ...inputStyle(editing), flex: 1 }}
+                    value={form.posteId || ""}
+                    onChange={(e) => setForm({ ...form, posteId: e.target.value })}
+                    disabled={!editing}
+                  >
+                    <option value="">— Sélectionner —</option>
+                    {refs.postes.map((p) => <option key={p.id} value={p.id}>{p.nom}</option>)}
+                  </select>
+                  {editing && (
+                    <button
+                      onClick={() => setShowAddRef("poste")}
+                      style={{ padding: "8px 12px", background: "#f0f9ff", border: "1px solid #0070f3", borderRadius: "6px", color: "#0070f3", cursor: "pointer", fontWeight: "bold", whiteSpace: "nowrap" }}
+                    >
+                      + Nouveau
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
-        {/* Onglet CONTRAT */}
+        {/* TAB CONTRAT */}
         {activeTab === "contrat" && (
-          <div style={{ background: "#f9f9f9", padding: 20, borderRadius: 8 }}>
-            <h3>Détails du Contrat</h3>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "15px", marginTop: 15 }}>
+          <div style={{ background: "white", borderRadius: "10px", padding: "24px", boxShadow: "0 1px 6px rgba(0,0,0,0.08)" }}>
+            <h3 style={{ margin: "0 0 20px", fontSize: "16px", fontWeight: "bold", color: "#1a1a1a" }}>
+              Contrat & Rémunération
+            </h3>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
               <div>
-                <label style={{ fontWeight: "bold" }}>Type de Contrat</label>
-                <p style={{ background: "white", padding: 10, border: "1px solid #ddd", borderRadius: 4 }}>
-                  {employee.typeContrat || "Non défini"}
-                </p>
+                <label style={labelStyle}>TYPE DE CONTRAT</label>
+                <div style={{ display: "flex", gap: "8px" }}>
+                  <select
+                    style={{ ...inputStyle(editing), flex: 1 }}
+                    value={form.typeContratId || ""}
+                    onChange={(e) => setForm({ ...form, typeContratId: e.target.value })}
+                    disabled={!editing}
+                  >
+                    <option value="">— Sélectionner —</option>
+                    {refs.typesContrat.map((t) => <option key={t.id} value={t.id}>{t.nom}</option>)}
+                  </select>
+                  {editing && (
+                    <button
+                      onClick={() => setShowAddRef("typeContrat")}
+                      style={{ padding: "8px 12px", background: "#f0f9ff", border: "1px solid #0070f3", borderRadius: "6px", color: "#0070f3", cursor: "pointer", fontWeight: "bold", whiteSpace: "nowrap" }}
+                    >
+                      + Nouveau
+                    </button>
+                  )}
+                </div>
               </div>
               <div>
-                <label style={{ fontWeight: "bold" }}>Taux Horaire</label>
-                <p style={{ background: "white", padding: 10, border: "1px solid #ddd", borderRadius: 4 }}>
-                  {employee.tauxHoraire || 0} DH
-                </p>
+                <label style={labelStyle}>TAUX HORAIRE (DH)</label>
+                <input type="number" style={inputStyle(editing)} value={form.tauxHoraire || ""} onChange={(e) => setForm({ ...form, tauxHoraire: parseFloat(e.target.value) })} disabled={!editing} placeholder="0.00" />
               </div>
               <div>
-                <label style={{ fontWeight: "bold" }}>Date Début</label>
-                <p style={{ background: "white", padding: 10, border: "1px solid #ddd", borderRadius: 4 }}>
-                  {employee.dateDebutContrat ? new Date(employee.dateDebutContrat).toLocaleDateString() : "N/A"}
-                </p>
+                <label style={labelStyle}>SALAIRE DE BASE (DH)</label>
+                <input type="number" style={inputStyle(editing)} value={form.salaireBase || ""} onChange={(e) => setForm({ ...form, salaireBase: parseFloat(e.target.value) })} disabled={!editing} placeholder="0.00" />
               </div>
               <div>
-                <label style={{ fontWeight: "bold" }}>Date Fin</label>
-                <p style={{ background: "white", padding: 10, border: "1px solid #ddd", borderRadius: 4 }}>
-                  {employee.dateFinContrat ? new Date(employee.dateFinContrat).toLocaleDateString() : "CDI"}
-                </p>
+                <label style={labelStyle}>INDEMNITÉ TRANSPORT (DH)</label>
+                <input type="number" style={inputStyle(editing)} value={form.indemniteTransport || ""} onChange={(e) => setForm({ ...form, indemniteTransport: parseFloat(e.target.value) })} disabled={!editing} placeholder="0.00" />
+              </div>
+              <div>
+                <label style={labelStyle}>AUTRE INDEMNITÉ (DH)</label>
+                <input type="number" style={inputStyle(editing)} value={form.autreIndemnite || ""} onChange={(e) => setForm({ ...form, autreIndemnite: parseFloat(e.target.value) })} disabled={!editing} placeholder="0.00" />
+              </div>
+              <div>
+                <label style={labelStyle}>DATE DÉBUT CONTRAT</label>
+                <input type="date" style={inputStyle(editing)} value={form.dateDebutContrat ? form.dateDebutContrat.split("T")[0] : ""} onChange={(e) => setForm({ ...form, dateDebutContrat: e.target.value })} disabled={!editing} />
+              </div>
+              <div>
+                <label style={labelStyle}>DATE FIN CONTRAT</label>
+                <input type="date" style={inputStyle(editing)} value={form.dateFinContrat ? form.dateFinContrat.split("T")[0] : ""} onChange={(e) => setForm({ ...form, dateFinContrat: e.target.value })} disabled={!editing} />
               </div>
             </div>
-            
-            <h3 style={{ marginTop: 30 }}>Indemnités & Primes</h3>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "15px", marginTop: 15 }}>
-              <div>
-                <label style={{ fontWeight: "bold" }}>Indemnité Transport</label>
-                <p style={{ background: "white", padding: 10, border: "1px solid #ddd", borderRadius: 4 }}>
-                  {employee.indemniteTransport || 0} DH
-                </p>
-              </div>
-              <div>
-                <label style={{ fontWeight: "bold" }}>Autres Indemnités</label>
-                <p style={{ background: "white", padding: 10, border: "1px solid #ddd", borderRadius: 4 }}>
-                  {employee.autreIndemnite || 0} DH
-                </p>
+
+            {/* Résumé coût */}
+            <div style={{ marginTop: "24px", background: "#f0f9ff", borderRadius: "8px", padding: "16px", border: "1px solid #bae6fd" }}>
+              <h4 style={{ margin: "0 0 12px", fontSize: "14px", color: "#0369a1" }}>Résumé Rémunération</h4>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px" }}>
+                {[
+                  { label: "Taux Horaire", value: `${employe.tauxHoraire || 0} DH/h` },
+                  { label: "Salaire Base", value: `${employe.salaireBase || 0} DH` },
+                  { label: "Total Indemnités", value: `${(employe.indemniteTransport || 0) + (employe.autreIndemnite || 0)} DH` },
+                ].map((item) => (
+                  <div key={item.label} style={{ textAlign: "center" }}>
+                    <div style={{ fontSize: "18px", fontWeight: "bold", color: "#0070f3" }}>{item.value}</div>
+                    <div style={{ fontSize: "11px", color: "#666" }}>{item.label}</div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
         )}
 
-        {/* Onglet SECURITE */}
+        {/* TAB SECURITE */}
         {activeTab === "securite" && (
-          <div style={{ background: "#f9f9f9", padding: 20, borderRadius: 8 }}>
-            <h3>Habilitations & Certifications</h3>
-            <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 10 }}>
-              <thead>
-                <tr style={{ borderBottom: "2px solid #ddd", textAlign: "left" }}>
-                  <th style={{ padding: 10 }}>Habilitation</th>
-                  <th style={{ padding: 10 }}>Date Expiration</th>
-                  <th style={{ padding: 10 }}>Statut</th>
-                </tr>
-              </thead>
-              <tbody>
-                {habilitations.length === 0 && (
-                  <tr><td colSpan={3} style={{ padding: 10, color: "#888" }}>Aucune habilitation enregistrée.</td></tr>
-                )}
-                {habilitations.map((h) => (
-                  <tr key={h.id} style={{ borderBottom: "1px solid #eee" }}>
-                    <td style={{ padding: 10 }}>{h.nom}</td>
-                    <td style={{ padding: 10 }}>{new Date(h.dateFin).toLocaleDateString()}</td>
-                    <td style={{ padding: 10 }}>
-                      {new Date(h.dateFin) > new Date() ? <span style={{ color: "green" }}>Valide</span> : <span style={{ color: "red" }}>Expiré</span>}
-                    </td>
+          <div style={{ background: "white", borderRadius: "10px", padding: "24px", boxShadow: "0 1px 6px rgba(0,0,0,0.08)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+              <h3 style={{ margin: 0, fontSize: "16px", fontWeight: "bold", color: "#1a1a1a" }}>
+                Habilitations & Sécurité
+              </h3>
+              <button
+                onClick={() => setShowAddHab(true)}
+                style={{ padding: "8px 16px", background: "#0070f3", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px" }}
+              >
+                + Ajouter habilitation
+              </button>
+            </div>
+
+            {(employe.habilitations || []).length === 0 ? (
+              <p style={{ color: "#999", textAlign: "center", padding: "20px" }}>Aucune habilitation enregistrée</p>
+            ) : (
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <thead>
+                  <tr style={{ background: "#f8fafc", borderBottom: "2px solid #e5e7eb" }}>
+                    <th style={{ padding: "10px 14px", textAlign: "left", fontSize: "12px", color: "#666", fontWeight: "bold" }}>TYPE</th>
+                    <th style={{ padding: "10px 14px", textAlign: "center", fontSize: "12px", color: "#666", fontWeight: "bold" }}>DATE EXPIRATION</th>
+                    <th style={{ padding: "10px 14px", textAlign: "center", fontSize: "12px", color: "#666", fontWeight: "bold" }}>STATUT</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {employe.habilitations.map((h) => {
+                    const expired = new Date(h.dateFin) < new Date();
+                    const soon = !expired && (new Date(h.dateFin).getTime() - Date.now()) < 30 * 24 * 60 * 60 * 1000;
+                    return (
+                      <tr key={h.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                        <td style={{ padding: "10px 14px", fontWeight: "bold", fontSize: "14px" }}>{h.type.nom}</td>
+                        <td style={{ padding: "10px 14px", textAlign: "center", fontSize: "13px" }}>
+                          {new Date(h.dateFin).toLocaleDateString("fr-FR")}
+                        </td>
+                        <td style={{ padding: "10px 14px", textAlign: "center" }}>
+                          <span style={{
+                            padding: "3px 10px", borderRadius: "20px", fontSize: "11px", fontWeight: "bold",
+                            background: expired ? "#fee2e2" : soon ? "#fef3c7" : "#d1fae5",
+                            color: expired ? "#ef4444" : soon ? "#f59e0b" : "#10b981",
+                          }}>
+                            {expired ? "EXPIRÉ" : soon ? "BIENTÔT" : "VALIDE"}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
           </div>
         )}
 
-        {/* Onglet EPI */}
+        {/* TAB EPI */}
         {activeTab === "epi" && (
-          <div style={{ background: "#f9f9f9", padding: 20, borderRadius: 8 }}>
-            <h3>Historique des dotations EPI</h3>
-            <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 10 }}>
-              <thead>
-                <tr style={{ borderBottom: "2px solid #ddd", textAlign: "left" }}>
-                  <th style={{ padding: 10 }}>Date</th>
-                  <th style={{ padding: 10 }}>Équipement</th>
-                </tr>
-              </thead>
-              <tbody>
-                {epiDistribues.length === 0 && (
-                  <tr><td colSpan={2} style={{ padding: 10, color: "#888" }}>Aucun EPI distribué.</td></tr>
-                )}
-                {epiDistribues.map((e) => (
-                  <tr key={e.id} style={{ borderBottom: "1px solid #eee" }}>
-                    <td style={{ padding: 10 }}>{new Date(e.date).toLocaleDateString()}</td>
-                    <td style={{ padding: 10 }}>{e.epi.nom}</td>
+          <div style={{ background: "white", borderRadius: "10px", padding: "24px", boxShadow: "0 1px 6px rgba(0,0,0,0.08)" }}>
+            <h3 style={{ margin: "0 0 20px", fontSize: "16px", fontWeight: "bold", color: "#1a1a1a" }}>
+              Historique EPI
+            </h3>
+            {(employe.epiDistribues || []).length === 0 ? (
+              <p style={{ color: "#999", textAlign: "center", padding: "20px" }}>Aucun EPI distribué</p>
+            ) : (
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <thead>
+                  <tr style={{ background: "#f8fafc", borderBottom: "2px solid #e5e7eb" }}>
+                    <th style={{ padding: "10px 14px", textAlign: "left", fontSize: "12px", color: "#666", fontWeight: "bold" }}>EPI</th>
+                    <th style={{ padding: "10px 14px", textAlign: "center", fontSize: "12px", color: "#666", fontWeight: "bold" }}>DATE</th>
+                    <th style={{ padding: "10px 14px", textAlign: "center", fontSize: "12px", color: "#666", fontWeight: "bold" }}>ÉTAT</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {employe.epiDistribues.map((e) => (
+                    <tr key={e.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                      <td style={{ padding: "10px 14px", fontWeight: "bold", fontSize: "14px" }}>{e.epi.nom}</td>
+                      <td style={{ padding: "10px 14px", textAlign: "center", fontSize: "13px" }}>
+                        {new Date(e.date).toLocaleDateString("fr-FR")}
+                      </td>
+                      <td style={{ padding: "10px 14px", textAlign: "center" }}>
+                        <span style={{
+                          padding: "3px 10px", borderRadius: "20px", fontSize: "11px", fontWeight: "bold",
+                          background: e.etat === "NEUF" ? "#d1fae5" : "#fef3c7",
+                          color: e.etat === "NEUF" ? "#10b981" : "#f59e0b",
+                        }}>
+                          {e.etat}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
         )}
-
       </div>
+
+      {/* Modal ajout référence */}
+      {showAddRef && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
+          <div style={{ background: "white", borderRadius: "12px", padding: "24px", width: "400px", boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}>
+            <h3 style={{ margin: "0 0 16px", fontSize: "16px" }}>
+              Ajouter {showAddRef === "poste" ? "un poste" : "un type de contrat"}
+            </h3>
+            <input
+              type="text"
+              placeholder="Nom..."
+              value={newRefNom}
+              onChange={(e) => setNewRefNom(e.target.value)}
+              style={{ width: "100%", padding: "10px 12px", border: "1px solid #ddd", borderRadius: "6px", fontSize: "14px", marginBottom: "16px", boxSizing: "border-box" }}
+              autoFocus
+            />
+            <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+              <button onClick={() => setShowAddRef(null)} style={{ padding: "8px 16px", border: "1px solid #ddd", borderRadius: "6px", background: "white", cursor: "pointer" }}>
+                Annuler
+              </button>
+              <button onClick={() => handleAddRef(showAddRef)} style={{ padding: "8px 16px", background: "#0070f3", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "bold" }}>
+                Ajouter
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal ajout habilitation */}
+      {showAddHab && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
+          <div style={{ background: "white", borderRadius: "12px", padding: "24px", width: "400px", boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}>
+            <h3 style={{ margin: "0 0 16px", fontSize: "16px" }}>Ajouter une habilitation</h3>
+            <div style={{ marginBottom: "12px" }}>
+              <label style={labelStyle}>TYPE D'HABILITATION</label>
+              <div style={{ display: "flex", gap: "8px" }}>
+                <select
+                  value={newHab.typeId}
+                  onChange={(e) => setNewHab({ ...newHab, typeId: e.target.value })}
+                  style={{ flex: 1, padding: "8px 12px", border: "1px solid #ddd", borderRadius: "6px", fontSize: "14px" }}
+                >
+                  <option value="">— Sélectionner —</option>
+                  {refs.typesHabilitation.map((t) => <option key={t.id} value={t.id}>{t.nom}</option>)}
+                </select>
+                <button
+                  onClick={() => setShowAddRef("typeHabilitation")}
+                  style={{ padding: "8px 12px", background: "#f0f9ff", border: "1px solid #0070f3", borderRadius: "6px", color: "#0070f3", cursor: "pointer", fontWeight: "bold" }}
+                >
+                  + Nouveau
+                </button>
+              </div>
+            </div>
+            <div style={{ marginBottom: "16px" }}>
+              <label style={labelStyle}>DATE D'EXPIRATION</label>
+              <input
+                type="date"
+                value={newHab.dateFin}
+                onChange={(e) => setNewHab({ ...newHab, dateFin: e.target.value })}
+                style={{ width: "100%", padding: "8px 12px", border: "1px solid #ddd", borderRadius: "6px", fontSize: "14px", boxSizing: "border-box" }}
+              />
+            </div>
+            <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+              <button onClick={() => setShowAddHab(false)} style={{ padding: "8px 16px", border: "1px solid #ddd", borderRadius: "6px", background: "white", cursor: "pointer" }}>
+                Annuler
+              </button>
+              <button onClick={handleAddHabilitation} style={{ padding: "8px 16px", background: "#0070f3", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "bold" }}>
+                Ajouter
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

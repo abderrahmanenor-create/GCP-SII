@@ -1,169 +1,260 @@
 "use client";
 
-import { useSession } from "next-auth/react";
-import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
-const modules = [
-  { label: "RH & Ouvriers", icon: "👥", href: "/dashboard/rh", color: "#0070f3", desc: "Employés, contrats, habilitations" },
-  { label: "Pointage", icon: "⏱️", href: "/dashboard/pointage", color: "#f59e0b", desc: "Présence, feuilles de régie" },
-  { label: "HSE & EPI", icon: "🦺", href: "/dashboard/epi", color: "#10b981", desc: "Équipements de protection" },
-  { label: "Chantiers", icon: "🏗️", href: "/dashboard/chantier", color: "#6366f1", desc: "Projets, zones, rapports" },
-  { label: "Facturation", icon: "💰", href: "/dashboard/facturation", color: "#ef4444", desc: "Coûts, factures, budget" },
-  { label: "Administration", icon: "⚙️", href: "/dashboard/admin", color: "#8b5cf6", desc: "Utilisateurs, paramètres" },
-];
+type Employe = {
+  id: string;
+  nom: string;
+  prenom: string;
+  matricule: string | null;
+  role: string;
+  statut: string;
+  photoUrl: string | null;
+  poste: { nom: string } | null;
+  equipe: { nom: string } | null;
+};
 
-const alerts = [
-  "⚠️ Habilitation électrique de Mohamed A. expire dans 7 jours",
-  "🦺 Stock casques de sécurité sous le seuil d'alerte",
-  "📋 Feuille de pointage Zone A en attente de validation",
-  "🏗️ Rapport chantier du 01/03 non soumis",
-  "⚠️ Habilitation soudure de Karim B. expire dans 3 jours",
-];
+const roleColor: Record<string, string> = {
+  ADMIN: "#6366f1",
+  CHEF_CHANTIER: "#0070f3",
+  SUPERVISEUR: "#f59e0b",
+  RH: "#10b981",
+  OUVRIER: "#6b7280",
+  CLIENT: "#ef4444",
+  SOUS_TRAITANT: "#8b5cf6",
+};
 
-export default function DashboardPage() {
-  const { data: session } = useSession();
-  const [tickerIndex, setTickerIndex] = useState(0);
-  const [now, setNow] = useState("");
+const statutColor: Record<string, string> = {
+  ACTIF: "#10b981",
+  INACTIF: "#6b7280",
+  SUSPENDU: "#ef4444",
+};
+
+export default function RhPage() {
+  const router = useRouter();
+  const [employes, setEmployes] = useState<Employe[]>([]);
+  const [filtered, setFiltered] = useState<Employe[]>([]);
+  const [search, setSearch] = useState("");
+  const [filterRole, setFilterRole] = useState("");
+  const [filterStatut, setFilterStatut] = useState("ACTIF");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setTickerIndex((i) => (i + 1) % alerts.length);
-    }, 4000);
-    return () => clearInterval(interval);
+    fetch("/api/users")
+      .then((r) => r.json())
+      .then((data) => {
+        setEmployes(Array.isArray(data) ? data : []);
+        setLoading(false);
+      });
   }, []);
 
   useEffect(() => {
-    const tick = () => {
-      const d = new Date();
-      setNow(d.toLocaleDateString("fr-FR", {
-        weekday: "long", year: "numeric", month: "long", day: "numeric"
-      }));
-    };
-    tick();
-    const interval = setInterval(tick, 60000);
-    return () => clearInterval(interval);
-  }, []);
+    let result = employes;
+    if (search) {
+      const s = search.toLowerCase();
+      result = result.filter(
+        (e) =>
+          e.nom.toLowerCase().includes(s) ||
+          e.prenom.toLowerCase().includes(s) ||
+          (e.matricule && e.matricule.toLowerCase().includes(s))
+      );
+    }
+    if (filterRole) result = result.filter((e) => e.role === filterRole);
+    if (filterStatut) result = result.filter((e) => e.statut === filterStatut);
+    setFiltered(result);
+  }, [search, filterRole, filterStatut, employes]);
 
   return (
     <div style={{ padding: "24px", backgroundColor: "#f4f6f9", minHeight: "100vh" }}>
 
-      {/* Barre de bienvenue */}
-      <div style={{
-        background: "linear-gradient(135deg, #0070f3, #0050b3)",
-        borderRadius: "12px",
-        padding: "20px 28px",
-        color: "white",
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: "20px",
-        boxShadow: "0 4px 15px rgba(0,112,243,0.3)"
-      }}>
+      {/* Header */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: "22px", fontWeight: "bold" }}>
-            Bonjour, {session?.user?.prenom || "Utilisateur"} 👋
+          <h1 style={{ margin: 0, fontSize: "22px", fontWeight: "bold", color: "#1a1a1a" }}>
+            👥 Ressources Humaines
           </h1>
-          <p style={{ margin: "4px 0 0", opacity: 0.85, fontSize: "14px" }}>
-            {now} · Rôle : {session?.user?.role || "—"}
+          <p style={{ margin: "4px 0 0", color: "#666", fontSize: "14px" }}>
+            {filtered.length} employé(s) trouvé(s)
           </p>
         </div>
-        <div style={{ fontSize: "40px" }}>🏭</div>
+        <button
+          onClick={() => router.push("/dashboard/rh/nouveau")}
+          style={{
+            background: "#0070f3",
+            color: "white",
+            padding: "10px 20px",
+            borderRadius: "8px",
+            border: "none",
+            fontSize: "14px",
+            fontWeight: "bold",
+            cursor: "pointer",
+          }}
+        >
+          + Ajouter un employé
+        </button>
       </div>
 
-      {/* Bandeau alertes défilant */}
+      {/* Filtres */}
       <div style={{
-        background: "#fff3cd",
-        border: "1px solid #ffc107",
-        borderRadius: "8px",
-        padding: "10px 20px",
+        background: "white",
+        borderRadius: "10px",
+        padding: "16px 20px",
         marginBottom: "20px",
         display: "flex",
-        alignItems: "center",
         gap: "12px",
-        overflow: "hidden"
+        alignItems: "center",
+        flexWrap: "wrap",
+        boxShadow: "0 1px 6px rgba(0,0,0,0.08)",
       }}>
-        <span style={{ fontWeight: "bold", color: "#856404", whiteSpace: "nowrap" }}>ALERTES</span>
-        <div style={{
-          color: "#856404",
-          fontSize: "14px",
-          transition: "opacity 0.5s ease",
-          flex: 1
-        }}>
-          {alerts[tickerIndex]}
+        <input
+          type="text"
+          placeholder="🔍 Rechercher par nom, prénom, matricule..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          style={{
+            flex: 1,
+            minWidth: "250px",
+            padding: "8px 12px",
+            border: "1px solid #ddd",
+            borderRadius: "6px",
+            fontSize: "14px",
+          }}
+        />
+        <select
+          value={filterRole}
+          onChange={(e) => setFilterRole(e.target.value)}
+          style={{ padding: "8px 12px", border: "1px solid #ddd", borderRadius: "6px", fontSize: "14px" }}
+        >
+          <option value="">Tous les rôles</option>
+          {Object.keys(roleColor).map((r) => (
+            <option key={r} value={r}>{r}</option>
+          ))}
+        </select>
+        <select
+          value={filterStatut}
+          onChange={(e) => setFilterStatut(e.target.value)}
+          style={{ padding: "8px 12px", border: "1px solid #ddd", borderRadius: "6px", fontSize: "14px" }}
+        >
+          <option value="">Tous les statuts</option>
+          <option value="ACTIF">ACTIF</option>
+          <option value="INACTIF">INACTIF</option>
+          <option value="SUSPENDU">SUSPENDU</option>
+        </select>
+        {(search || filterRole || filterStatut !== "ACTIF") && (
+          <button
+            onClick={() => { setSearch(""); setFilterRole(""); setFilterStatut("ACTIF"); }}
+            style={{ padding: "8px 12px", border: "1px solid #ddd", borderRadius: "6px", background: "white", cursor: "pointer", fontSize: "13px" }}
+          >
+            ✕ Réinitialiser
+          </button>
+        )}
+      </div>
+
+      {/* Liste */}
+      {loading ? (
+        <div style={{ background: "white", borderRadius: "10px", padding: "40px", textAlign: "center", color: "#999" }}>
+          Chargement...
         </div>
-      </div>
-
-      {/* Statistiques rapides */}
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
-        gap: "16px",
-        marginBottom: "28px"
-      }}>
-        {[
-          { label: "Ouvriers actifs", value: "—", icon: "👷", color: "#0070f3" },
-          { label: "Chantiers en cours", value: "—", icon: "🏗️", color: "#6366f1" },
-          { label: "EPI distribués", value: "—", icon: "🦺", color: "#10b981" },
-          { label: "Pointages en attente", value: "—", icon: "⏱️", color: "#f59e0b" },
-        ].map((stat) => (
-          <div key={stat.label} style={{
-            background: "white",
-            borderRadius: "10px",
-            padding: "16px",
-            boxShadow: "0 1px 6px rgba(0,0,0,0.08)",
-            borderTop: `4px solid ${stat.color}`,
-            textAlign: "center"
-          }}>
-            <div style={{ fontSize: "28px" }}>{stat.icon}</div>
-            <div style={{ fontSize: "26px", fontWeight: "bold", color: stat.color }}>{stat.value}</div>
-            <div style={{ fontSize: "12px", color: "#666", marginTop: "4px" }}>{stat.label}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* Modules */}
-      <h2 style={{ fontSize: "16px", fontWeight: "bold", color: "#333", marginBottom: "14px" }}>
-        Accès rapide aux modules
-      </h2>
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-        gap: "16px"
-      }}>
-        {modules.map((mod) => (
-          <Link key={mod.href} href={mod.href} style={{ textDecoration: "none" }}>
-            <div style={{
-              background: "white",
-              borderRadius: "10px",
-              padding: "20px",
-              boxShadow: "0 1px 6px rgba(0,0,0,0.08)",
-              borderLeft: `5px solid ${mod.color}`,
-              cursor: "pointer",
-              transition: "transform 0.15s ease, box-shadow 0.15s ease",
-              display: "flex",
-              alignItems: "center",
-              gap: "14px",
-            }}
-              onMouseEnter={e => {
-                (e.currentTarget as HTMLDivElement).style.transform = "translateY(-2px)";
-                (e.currentTarget as HTMLDivElement).style.boxShadow = "0 6px 20px rgba(0,0,0,0.12)";
-              }}
-              onMouseLeave={e => {
-                (e.currentTarget as HTMLDivElement).style.transform = "translateY(0)";
-                (e.currentTarget as HTMLDivElement).style.boxShadow = "0 1px 6px rgba(0,0,0,0.08)";
-              }}
-            >
-              <div style={{ fontSize: "32px" }}>{mod.icon}</div>
-              <div>
-                <div style={{ fontWeight: "bold", color: "#1a1a1a", fontSize: "15px" }}>{mod.label}</div>
-                <div style={{ fontSize: "12px", color: "#888", marginTop: "2px" }}>{mod.desc}</div>
-              </div>
-            </div>
-          </Link>
-        ))}
-      </div>
-
+      ) : filtered.length === 0 ? (
+        <div style={{ background: "white", borderRadius: "10px", padding: "40px", textAlign: "center", color: "#999" }}>
+          Aucun employé trouvé
+        </div>
+      ) : (
+        <div style={{ background: "white", borderRadius: "10px", boxShadow: "0 1px 6px rgba(0,0,0,0.08)", overflow: "hidden" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <thead>
+              <tr style={{ background: "#f8fafc", borderBottom: "2px solid #e5e7eb" }}>
+                <th style={{ padding: "12px 16px", textAlign: "left", fontSize: "12px", color: "#666", fontWeight: "bold" }}>EMPLOYÉ</th>
+                <th style={{ padding: "12px 16px", textAlign: "left", fontSize: "12px", color: "#666", fontWeight: "bold" }}>POSTE</th>
+                <th style={{ padding: "12px 16px", textAlign: "left", fontSize: "12px", color: "#666", fontWeight: "bold" }}>ÉQUIPE</th>
+                <th style={{ padding: "12px 16px", textAlign: "center", fontSize: "12px", color: "#666", fontWeight: "bold" }}>RÔLE</th>
+                <th style={{ padding: "12px 16px", textAlign: "center", fontSize: "12px", color: "#666", fontWeight: "bold" }}>STATUT</th>
+                <th style={{ padding: "12px 16px", textAlign: "center", fontSize: "12px", color: "#666", fontWeight: "bold" }}>ACTION</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((e) => (
+                <tr
+                  key={e.id}
+                  style={{ borderBottom: "1px solid #f1f5f9", cursor: "pointer" }}
+                  onMouseEnter={(ev) => (ev.currentTarget.style.background = "#f8fafc")}
+                  onMouseLeave={(ev) => (ev.currentTarget.style.background = "white")}
+                >
+                  <td style={{ padding: "12px 16px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      <div style={{
+                        width: "38px", height: "38px", borderRadius: "50%",
+                        background: roleColor[e.role] || "#6b7280",
+                        color: "white", display: "flex", alignItems: "center",
+                        justifyContent: "center", fontWeight: "bold", fontSize: "15px",
+                        flexShrink: 0,
+                      }}>
+                        {e.photoUrl ? (
+                          <img src={e.photoUrl} alt="" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} />
+                        ) : (
+                          e.nom[0].toUpperCase()
+                        )}
+                      </div>
+                      <div>
+                        <div style={{ fontWeight: "bold", fontSize: "14px" }}>{e.nom} {e.prenom}</div>
+                        <div style={{ fontSize: "12px", color: "#999" }}>{e.matricule || "Sans matricule"}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td style={{ padding: "12px 16px", fontSize: "13px", color: "#555" }}>
+                    {e.poste?.nom || <span style={{ color: "#ccc" }}>—</span>}
+                  </td>
+                  <td style={{ padding: "12px 16px", fontSize: "13px", color: "#555" }}>
+                    {e.equipe?.nom || <span style={{ color: "#ccc" }}>—</span>}
+                  </td>
+                  <td style={{ padding: "12px 16px", textAlign: "center" }}>
+                    <span style={{
+                      background: `${roleColor[e.role]}20`,
+                      color: roleColor[e.role] || "#333",
+                      padding: "3px 10px",
+                      borderRadius: "20px",
+                      fontSize: "11px",
+                      fontWeight: "bold",
+                    }}>
+                      {e.role}
+                    </span>
+                  </td>
+                  <td style={{ padding: "12px 16px", textAlign: "center" }}>
+                    <span style={{
+                      background: `${statutColor[e.statut]}20`,
+                      color: statutColor[e.statut] || "#333",
+                      padding: "3px 10px",
+                      borderRadius: "20px",
+                      fontSize: "11px",
+                      fontWeight: "bold",
+                    }}>
+                      {e.statut}
+                    </span>
+                  </td>
+                  <td style={{ padding: "12px 16px", textAlign: "center" }}>
+                    <button
+                      onClick={() => router.push(`/dashboard/rh/${e.id}`)}
+                      style={{
+                        padding: "6px 14px",
+                        background: "#0070f3",
+                        color: "white",
+                        border: "none",
+                        borderRadius: "6px",
+                        cursor: "pointer",
+                        fontSize: "13px",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      Voir fiche
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
