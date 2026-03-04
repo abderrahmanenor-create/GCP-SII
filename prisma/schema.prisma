@@ -8,261 +8,394 @@ datasource db {
 }
 
 // ==========================================
-// 1. ADMIN & STRUCTURE
+// TABLES DE RÉFÉRENCE DYNAMIQUES
+// ==========================================
+
+model RefPoste {
+  id        String   @id @default(uuid())
+  nom       String   @unique
+  actif     Boolean  @default(true)
+  users     User[]
+}
+
+model RefTypeContrat {
+  id        String   @id @default(uuid())
+  nom       String   @unique
+  actif     Boolean  @default(true)
+  users     User[]
+}
+
+model RefTypeHabilitation {
+  id        String        @id @default(uuid())
+  nom       String        @unique
+  dureeValiditeMois Int   @default(12)
+  actif     Boolean       @default(true)
+  habilitations Habilitation[]
+}
+
+model RefCategorieEPI {
+  id        String   @id @default(uuid())
+  nom       String   @unique
+  actif     Boolean  @default(true)
+  epis      EPI[]
+}
+
+model RefCategoriesMateriel {
+  id        String     @id @default(uuid())
+  nom       String     @unique
+  actif     Boolean    @default(true)
+  materiels Materiel[]
+}
+
+model RefMotifAbsence {
+  id        String   @id @default(uuid())
+  nom       String   @unique
+  paye      Boolean  @default(false)
+  actif     Boolean  @default(true)
+}
+
+model RefCodePointage {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  libelle   String
+  facturable Boolean @default(true)
+  actif     Boolean  @default(true)
+}
+
+// ==========================================
+// SOCIÉTÉS & STRUCTURE
 // ==========================================
 
 model Societe {
-  id        String   @id @default(uuid())
-  nom       String
-  type      String   // "CLIENT", "SOUS_TRAITANT", "INTERNE"
-  ice       String?
-  users     User[]
-  contrats  Contrat[]
+  id       String   @id @default(uuid())
+  nom      String
+  type     String   // "CLIENT", "SOUS_TRAITANT", "INTERNE"
+  ice      String?
+  email    String?
+  tel      String?
+  adresse  String?
+  actif    Boolean  @default(true)
+  users    User[]
+  contrats Contrat[]
+  createdAt DateTime @default(now())
 }
 
 model Contrat {
-  id              String   @id @default(uuid())
-  numero          String   @unique
-  objet           String
-  budget          Float
-  dateDebut       DateTime
-  dateFin         DateTime?
-  statut          String
-  
-  validationRequise Boolean @default(false)
-  
-  clientId        String
-  client          Societe  @relation(fields: [clientId], references: [id])
-  
-  projets         Projet[]
-  factures        Facture[]
+  id                String   @id @default(uuid())
+  numero            String   @unique
+  objet             String
+  budget            Float
+  dateDebut         DateTime
+  dateFin           DateTime?
+  statut            String   @default("ACTIF")
+  validationRequise Boolean  @default(true)
+  clientId          String
+  client            Societe  @relation(fields: [clientId], references: [id])
+  projets           Projet[]
+  factures          Facture[]
+  createdAt         DateTime @default(now())
 }
 
 model Projet {
-  id          String   @id @default(uuid())
-  nom         String
-  code        String   @unique
-  
-  contratId   String
-  contrat     Contrat  @relation(fields: [contratId], references: [id])
-  
-  zones       Zone[]
-  equipes     Equipe[]
-  couts       CoutProjet[]
+  id        String       @id @default(uuid())
+  nom       String
+  code      String       @unique
+  contratId String
+  contrat   Contrat      @relation(fields: [contratId], references: [id])
+  zones     Zone[]
+  equipes   Equipe[]
+  couts     CoutProjet[]
+  createdAt DateTime     @default(now())
 }
 
 model Zone {
-  id          String   @id @default(uuid())
-  nom         String
-  projetId    String
-  projet      Projet   @relation(fields: [projetId], references: [id])
-  
-  feuillesPointage FeuillePointage[]
-  rapports    RapportChantier[]
-  affectations AffectationMateriel[]
+  id               String               @id @default(uuid())
+  nom              String
+  projetId         String
+  projet           Projet               @relation(fields: [projetId], references: [id])
+  feuillesRegie    FeuilleRegie[]
+  presences        PresenceSite[]
+  rapports         RapportChantier[]
+  affectations     AffectationMateriel[]
+  createdAt        DateTime             @default(now())
 }
 
 model Equipe {
-  id          String   @id @default(uuid())
-  nom         String
-  projetId    String
-  projet      Projet   @relation(fields: [projetId], references: [id])
-  membres     User[]
+  id        String   @id @default(uuid())
+  nom       String
+  projetId  String
+  projet    Projet   @relation(fields: [projetId], references: [id])
+  membres   User[]
+  createdAt DateTime @default(now())
 }
 
 // ==========================================
-// 2. RH & USERS
+// RH & UTILISATEURS
 // ==========================================
 
 model User {
-  id            String   @id @default(uuid())
-  email         String   @unique
-  password      String
-  nom           String
-  prenom        String
-  role          String
-  statut        String
-  createdAt     DateTime @default(now()) // Remis pour éviter la perte de données
-  
-  matricule     String?  @unique
-  cin           String?
-  cnss          String?
-  tauxHoraire   Float?
-    // --- Détails Contrat Salarié ---
-  photoUrl         String?   // Photo de profil (URL)
-  typeContrat      String?   // "CDI", "CDD", "CHANTIER"
+  id               String          @id @default(uuid())
+  email            String          @unique
+  password         String
+  nom              String
+  prenom           String
+  role             String          @default("OUVRIER")
+  statut           String          @default("ACTIF")
+  createdAt        DateTime        @default(now())
+
+  // Données administratives
+  matricule        String?         @unique
+  cin              String?
+  cnss             String?
+  telephone        String?
+  photoUrl         String?
+
+  // Contrat salarié
+  tauxHoraire      Float?
+  salaireBase      Float?
+  indemniteTransport Float?
+  autreIndemnite   Float?
   dateDebutContrat DateTime?
   dateFinContrat   DateTime?
-  salaireBase      Float?    // Salaire de base mensuel
-  indemniteTransport Float?  // Indemnité de transport
-  autreIndemnite     Float?  // Autres primes
-  postOccupe       String?   // Intitulé du poste
-  societeId     String?
-  societe       Societe? @relation(fields: [societeId], references: [id])
-  equipeId      String?
-  equipe        Equipe?  @relation(fields: [equipeId], references: [id])
-  
-  habilitations Habilitation[]
-  epiDistribues DistributionEPI[]
-  pointages     LignePointage[]
+
+  // Références dynamiques
+  posteId          String?
+  poste            RefPoste?       @relation(fields: [posteId], references: [id])
+  typeContratId    String?
+  typeContrat      RefTypeContrat? @relation(fields: [typeContratId], references: [id])
+
+  // Appartenance
+  societeId        String?
+  societe          Societe?        @relation(fields: [societeId], references: [id])
+  equipeId         String?
+  equipe           Equipe?         @relation(fields: [equipeId], references: [id])
+
+  // Relations
+  habilitations    Habilitation[]
+  epiDistribues    DistributionEPI[]
+  presences        PresenceSite[]
+  lignesRegie      LigneRegie[]
+  commentaires     Commentaire[]
 }
 
 model Habilitation {
-  id        String   @id @default(uuid())
-  nom       String
-  dateFin   DateTime
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-}
-
-// ==========================================
-// 3. POINTAGE
-// ==========================================
-
-model FeuillePointage {
-  id            String   @id @default(uuid())
-  date          DateTime
-  statut        String
-  type          String
-  
-  totalHeures   Float    @default(0)
-  totalCout     Float    @default(0)
-  
-  valideParId   String?
-  dateValidation DateTime?
-  signatureUrl  String?
-  
-  zoneId        String
-  zone          Zone     @relation(fields: [zoneId], references: [id])
-  
-  lignes        LignePointage[]
-}
-
-model LignePointage {
-  id          String   @id @default(uuid())
-  heureDebut  DateTime
-  heureFin    DateTime
-  heures      Float
-  montant     Float
-  
-  signatureOuvrier String?
-  
+  id          String              @id @default(uuid())
+  dateObtention DateTime          @default(now())
+  dateFin     DateTime
+  document    String?
+  statut      String              @default("VALIDE")
   userId      String
-  user        User     @relation(fields: [userId], references: [id])
-  
-  feuilleId   String
-  feuille     FeuillePointage @relation(fields: [feuilleId], references: [id])
+  user        User                @relation(fields: [userId], references: [id])
+  typeId      String
+  type        RefTypeHabilitation @relation(fields: [typeId], references: [id])
+  createdAt   DateTime            @default(now())
 }
 
 // ==========================================
-// 4. RAPPORTS
+// POINTAGE INTERNE (PRÉSENCE SITE)
+// ==========================================
+
+model PresenceSite {
+  id           String    @id @default(uuid())
+  date         DateTime
+  heureArrivee DateTime?
+  heureDepart  DateTime?
+  statut       String    @default("PRESENT") // PRESENT, ABSENT, CONGE, MALADIE
+  motifAbsence String?
+  note         String?
+  valide       Boolean   @default(false)
+  valideParId  String?
+  userId       String
+  user         User      @relation(fields: [userId], references: [id])
+  zoneId       String?
+  zone         Zone?     @relation(fields: [zoneId], references: [id])
+  createdAt    DateTime  @default(now())
+
+  @@unique([userId, date])
+}
+
+// ==========================================
+// POINTAGE CLIENT (RÉGIE)
+// ==========================================
+
+model FeuilleRegie {
+  id              String       @id @default(uuid())
+  date            DateTime
+  semaine         Int
+  mois            Int
+  annee           Int
+  statut          String       @default("BROUILLON") // BROUILLON, SOUMIS, VALIDE_CHEF, VALIDE_CLIENT
+  totalHeures     Float        @default(0)
+  totalCoutMO     Float        @default(0)
+  totalCoutMat    Float        @default(0)
+  totalGeneral    Float        @default(0)
+
+  // Validation chef
+  valideChefId    String?
+  dateValidChef   DateTime?
+  
+  // Validation client
+  valideClientId  String?
+  dateValidClient DateTime?
+  signatureUrl    String?
+  scanSignature   String?
+
+  zoneId          String
+  zone            Zone         @relation(fields: [zoneId], references: [id])
+  lignes          LigneRegie[]
+  affectationsMat AffectationMateriel[]
+  rapports        RapportChantier[]
+  createdAt       DateTime     @default(now())
+}
+
+model LigneRegie {
+  id           String       @id @default(uuid())
+  heures       Float
+  tauxHoraire  Float
+  montant      Float
+  codePointage String?
+  note         String?
+  userId       String
+  user         User         @relation(fields: [userId], references: [id])
+  feuilleId    String
+  feuille      FeuilleRegie @relation(fields: [feuilleId], references: [id])
+  createdAt    DateTime     @default(now())
+}
+
+// ==========================================
+// RAPPORTS
 // ==========================================
 
 model RapportChantier {
-  id          String   @id @default(uuid())
-  date        DateTime
-  type        String
-  titre       String
-  description String
-  
-  photos      String[]
-  
-  valideChef  Boolean  @default(false)
-  valideClient Boolean @default(false)
-  
-  zoneId      String
-  zone        Zone     @relation(fields: [zoneId], references: [id])
-  
-  createdAt   DateTime @default(now())
+  id           String        @id @default(uuid())
+  date         DateTime
+  type         String        // JOURNALIER, HEBDOMADAIRE, MENSUEL, MENSUEL_VALORISE
+  titre        String
+  description  String?
+  photos       String[]
+  statut       String        @default("BROUILLON")
+  valideChef   Boolean       @default(false)
+  valideClient Boolean       @default(false)
+  pdfUrl       String?
+  zoneId       String
+  zone         Zone          @relation(fields: [zoneId], references: [id])
+  feuilleId    String?
+  feuille      FeuilleRegie? @relation(fields: [feuilleId], references: [id])
+  commentaires Commentaire[]
+  createdAt    DateTime      @default(now())
 }
 
 // ==========================================
-// 5. HSE - EPI
+// HSE - EPI
 // ==========================================
 
 model EPI {
-  id              String   @id @default(uuid())
-  nom             String
-  reference       String?
-  taille          String?
-  stockInitial    Int      @default(0)
-  seuilAlerte     Int      @default(5)
-  prixUnitaire    Float?
-  
-  mouvements      MouvementEPI[]
-  distributions   DistributionEPI[]
+  id            String          @id @default(uuid())
+  nom           String
+  reference     String?
+  taille        String?
+  stockInitial  Int             @default(0)
+  stockActuel   Int             @default(0)
+  seuilAlerte   Int             @default(5)
+  prixUnitaire  Float?
+  categorieId   String?
+  categorie     RefCategorieEPI? @relation(fields: [categorieId], references: [id])
+  mouvements    MouvementEPI[]
+  distributions DistributionEPI[]
+  createdAt     DateTime        @default(now())
 }
 
 model MouvementEPI {
-  id          String   @id @default(uuid())
-  type        String
-  quantite    Int
-  date        DateTime @default(now())
-  motif       String?
-  
-  epiId       String
-  epi         EPI      @relation(fields: [epiId], references: [id])
+  id        String   @id @default(uuid())
+  type      String   // ENTREE, SORTIE, PERTE, RETOUR
+  quantite  Int
+  date      DateTime @default(now())
+  motif     String?
+  epiId     String
+  epi       EPI      @relation(fields: [epiId], references: [id])
 }
 
 model DistributionEPI {
-  id          String   @id @default(uuid())
-  date        DateTime @default(now())
-  quantite    Int      @default(1)
-  etat        String
-  remarque    String?
-  
-  epiId       String
-  epi         EPI      @relation(fields: [epiId], references: [id])
-  
-  userId      String
-  user        User     @relation(fields: [userId], references: [id])
-  
+  id               String   @id @default(uuid())
+  date             DateTime @default(now())
+  quantite         Int      @default(1)
+  etat             String   @default("NEUF")
+  dateRetour       DateTime?
+  remarque         String?
   signatureRecipisse String?
+  epiId            String
+  epi              EPI      @relation(fields: [epiId], references: [id])
+  userId           String
+  user             User     @relation(fields: [userId], references: [id])
 }
 
 // ==========================================
-// 6. MATERIEL
+// MATÉRIEL JESA
 // ==========================================
 
 model Materiel {
-  id              String   @id @default(uuid())
-  nom             String
-  code            String   @unique
-  categorie       String
-  proprietaire    String
-  coutJournalier  Float?
-  prixLocationJour Float?
-  
-  affectations    AffectationMateriel[]
+  id                  String                @id @default(uuid())
+  nom                 String
+  code                String                @unique
+  numeroSerie         String?
+  proprietaire        String                @default("INTERNE")
+  statut              String                @default("OPERATIONNEL")
+  coutJournalier      Float?
+  prixLocationJour    Float?
+  categorieId         String?
+  categorie           RefCategoriesMateriel? @relation(fields: [categorieId], references: [id])
+
+  // Documents JESA
+  attestationElectrique   String?
+  dateAttestElec          DateTime?
+  certificatLevage        String?
+  dateCertLevage          DateTime?
+  ficheControleOutillage  String?
+  dateControleOutillage   DateTime?
+  carnetBord              String?
+  dateCarnetBord          DateTime?
+  ficheEPI                String?
+
+  // Prochaines inspections
+  prochaineInspElec     DateTime?
+  prochaineInspLevage   DateTime?
+  prochaineInspOutillage DateTime?
+
+  affectations        AffectationMateriel[]
+  createdAt           DateTime              @default(now())
 }
 
 model AffectationMateriel {
-  id            String   @id @default(uuid())
+  id            String        @id @default(uuid())
   dateDebut     DateTime
   dateFin       DateTime?
-  valideClient  Boolean  @default(false)
-  
+  joursFactures Int           @default(0)
+  montant       Float         @default(0)
+  valideClient  Boolean       @default(false)
   materielId    String
-  materiel      Materiel @relation(fields: [materielId], references: [id])
-  
+  materiel      Materiel      @relation(fields: [materielId], references: [id])
   zoneId        String
-  zone          Zone     @relation(fields: [zoneId], references: [id])
+  zone          Zone          @relation(fields: [zoneId], references: [id])
+  feuilleId     String?
+  feuille       FeuilleRegie? @relation(fields: [feuilleId], references: [id])
+  createdAt     DateTime      @default(now())
 }
 
 // ==========================================
-// 7. FACTURATION
+// FACTURATION
 // ==========================================
 
 model Facture {
-  id          String   @id @default(uuid())
-  numero      String   @unique
-  date        DateTime @default(now())
-  montantHT   Float
-  montantTTC  Float
-  statut      String
-  
-  contratId   String
-  contrat     Contrat  @relation(fields: [contratId], references: [id])
+  id         String   @id @default(uuid())
+  numero     String   @unique
+  date       DateTime @default(now())
+  montantHT  Float
+  tva        Float    @default(20)
+  montantTTC Float
+  statut     String   @default("BROUILLON")
+  contratId  String
+  contrat    Contrat  @relation(fields: [contratId], references: [id])
+  createdAt  DateTime @default(now())
 }
 
 model CoutProjet {
@@ -271,7 +404,21 @@ model CoutProjet {
   montant     Float
   date        DateTime @default(now())
   description String?
-  
   projetId    String
   projet      Projet   @relation(fields: [projetId], references: [id])
+}
+
+// ==========================================
+// COMMENTAIRES (SYSTÈME GLOBAL)
+// ==========================================
+
+model Commentaire {
+  id          String    @id @default(uuid())
+  contenu     String
+  entite      String    // "RAPPORT", "EMPLOYE", "MATERIEL", etc.
+  entiteId    String
+  auteurId    String
+  auteur      User      @relation(fields: [auteurId], references: [id])
+  rapport     RapportChantier? @relation(fields: [entiteId], references: [id])
+  createdAt   DateTime  @default(now())
 }
