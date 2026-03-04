@@ -1,39 +1,28 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [error, setError] = useState("");
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    
-    const res = await signIn("credentials", {
-      email: formData.get("email"),
-      password: formData.get("password"),
-      redirect: false,
-    });
-
-    if (res?.error) {
-      setError("Identifiants incorrects");
-    } else {
-      router.push("/dashboard");
-    }
+  
+  const handleLogin = () => {
+    // Pour l'instant, on simule la connexion pour voir si ça marche
+    router.push("/dashboard");
   };
 
   return (
-    <div style={{ height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#eee" }}>
-      <form onSubmit={handleSubmit} style={{ background: "white", padding: 40, borderRadius: 8, width: 300 }}>
-        <h1 style={{ textAlign: "center" }}>Connexion</h1>
-        {error && <p style={{ color: "red" }}>{error}</p>}
-        <input name="email" type="email" placeholder="Email" required style={{ width: "100%", padding: 8, marginBottom: 10, boxSizing: "border-box" }} />
-        <input name="password" type="password" placeholder="Mot de passe" required style={{ width: "100%", padding: 8, marginBottom: 10, boxSizing: "border-box" }} />
-        <button type="submit" style={{ width: "100%", padding: 10, background: "#0070f3", color: "white", border: "none" }}>Se connecter</button>
-      </form>
+    <div style={{ height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#f0f0f0" }}>
+      <div style={{ background: "white", padding: "40px", borderRadius: "10px", boxShadow: "0 2px 10px rgba(0,0,0,0.1)", textAlign: "center" }}>
+        <h1 style={{ color: "#333" }}>Connexion</h1>
+        <p style={{ color: "#666" }}>Page de test simplifiée</p>
+        <button 
+          onClick={handleLogin}
+          style={{ marginTop: "20px", padding: "10px 30px", background: "#0070f3", color: "white", border: "none", cursor: "pointer", fontSize: "16px" }}
+        >
+          Aller au Dashboard
+        </button>
+      </div>
     </div>
   );
 }
