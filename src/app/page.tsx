@@ -1,6 +1,3 @@
-import { redirect } from "next/navigation";
-
 export default function Home() {
-  // Redirection automatique vers le login
-  redirect("/login");
+  return <h1>TEST RACINE OK</h1>;
 }
