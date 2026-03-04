@@ -176,6 +176,10 @@ model User {
   presences        PresenceSite[]
   lignesRegie      LigneRegie[]
   commentaires     Commentaire[]
+  // Documents
+  cinUrl           String?
+  cnssUrl          String?
+  contratUrl       String?
 }
 
 model Habilitation {

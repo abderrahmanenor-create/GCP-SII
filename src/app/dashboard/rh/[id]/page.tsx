@@ -1,5 +1,5 @@
 "use client";
-
+import { uploadFile } from "@/lib/cloudinary";
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 
@@ -27,6 +27,9 @@ type Employe = {
   societe: { id: string; nom: string } | null;
   habilitations: { id: string; dateFin: string; statut: string; type: { nom: string } }[];
   epiDistribues: { id: string; date: string; etat: string; epi: { nom: string } }[];
+  cinUrl: string | null;
+  cnssUrl: string | null;
+  contratUrl: string | null;
 };
 
 type Ref = {
@@ -37,7 +40,92 @@ type Ref = {
 
 const ROLES = ["ADMIN", "CHEF_CHANTIER", "SUPERVISEUR", "RH", "OUVRIER", "CLIENT", "SOUS_TRAITANT"];
 const STATUTS = ["ACTIF", "INACTIF", "SUSPENDU"];
+function DocumentCard({ label, type, url, accept, icon, userId, onUploaded }: {
+  label: string;
+  type: string;
+  url: string | null;
+  accept: string;
+  icon: string;
+  userId: string;
+  onUploaded: (url: string) => void;
+}) {
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState("");
 
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    setError("");
+    try {
+      const cloudUrl = await uploadFile(file, `gcp-sii/employes/${userId}`);
+      await fetch("/api/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, type, url: cloudUrl }),
+      });
+      onUploaded(cloudUrl);
+    } catch {
+      setError("Erreur upload");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div style={{
+      border: "2px dashed #e5e7eb",
+      borderRadius: "10px",
+      padding: "20px",
+      textAlign: "center",
+      background: url ? "#f0fdf4" : "#fafafa",
+      borderColor: url ? "#10b981" : "#e5e7eb",
+    }}>
+      <div style={{ fontSize: "32px", marginBottom: "8px" }}>{icon}</div>
+      <div style={{ fontWeight: "bold", fontSize: "14px", marginBottom: "8px", color: "#1a1a1a" }}>{label}</div>
+
+      {url ? (
+        <div>
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: "#0070f3", fontSize: "13px", textDecoration: "none", display: "block", marginBottom: "8px" }}
+          >
+            ✓ Voir le document
+          </a>
+          <label style={{
+            padding: "6px 14px",
+            background: "white",
+            border: "1px solid #ddd",
+            borderRadius: "6px",
+            cursor: "pointer",
+            fontSize: "12px",
+            color: "#666",
+          }}>
+            {uploading ? "Upload..." : "Remplacer"}
+            <input type="file" accept={accept} onChange={handleUpload} style={{ display: "none" }} />
+          </label>
+        </div>
+      ) : (
+        <label style={{
+          padding: "8px 16px",
+          background: "#0070f3",
+          color: "white",
+          borderRadius: "6px",
+          cursor: "pointer",
+          fontSize: "13px",
+          fontWeight: "bold",
+          display: "inline-block",
+        }}>
+          {uploading ? "Upload en cours..." : "+ Ajouter"}
+          <input type="file" accept={accept} onChange={handleUpload} style={{ display: "none" }} disabled={uploading} />
+        </label>
+      )}
+      {error && <p style={{ color: "#ef4444", fontSize: "12px", marginTop: "8px" }}>{error}</p>}
+    </div>
+  );
+}
 export default function FicheEmployePage() {
   const params = useParams();
   const router = useRouter();
@@ -127,6 +215,7 @@ export default function FicheEmployePage() {
     { id: "contrat", label: "Contrat & Coût" },
     { id: "securite", label: "Sécurité & Habilitations" },
     { id: "epi", label: "Historique EPI" },
+    { id: "documents", label: "Documents" },
   ];
 
   const inputStyle = (editable: boolean) => ({
@@ -495,6 +584,33 @@ export default function FicheEmployePage() {
                 </tbody>
               </table>
             )}
+          </div>
+        )}
+        {/* TAB DOCUMENTS */}
+        {activeTab === "documents" && (
+          <div style={{ background: "white", borderRadius: "10px", padding: "24px", boxShadow: "0 1px 6px rgba(0,0,0,0.08)" }}>
+            <h3 style={{ margin: "0 0 20px", fontSize: "16px", fontWeight: "bold", color: "#1a1a1a" }}>
+              Documents
+            </h3>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
+              {[
+                { label: "Photo de profil", type: "photo", url: employe.photoUrl, accept: "image/*", icon: "🖼️" },
+                { label: "Copie CIN", type: "cin", url: employe.cinUrl, accept: "image/*,application/pdf", icon: "🪪" },
+                { label: "Copie CNSS", type: "cnss", url: employe.cnssUrl, accept: "image/*,application/pdf", icon: "📄" },
+                { label: "Contrat signé", type: "contrat", url: employe.contratUrl, accept: "application/pdf", icon: "📋" },
+              ].map((doc) => (
+                <DocumentCard
+                  key={doc.type}
+                  label={doc.label}
+                  type={doc.type}
+                  url={doc.url}
+                  accept={doc.accept}
+                  icon={doc.icon}
+                  userId={employe.id}
+                  onUploaded={(newUrl) => setEmploye((prev) => prev ? { ...prev, [`${doc.type}Url`]: newUrl } : prev)}
+                />
+              ))}
+            </div>
           </div>
         )}
       </div>

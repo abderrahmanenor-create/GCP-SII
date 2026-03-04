@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import bcrypt from "bcryptjs";
 
-// Fonction GET : Pour lire la liste des utilisateurs
 export async function GET() {
   try {
     const users = await db.user.findMany({
@@ -13,22 +12,31 @@ export async function GET() {
         prenom: true,
         matricule: true,
         role: true,
-        // On ne sélectionne pas le mot de passe pour la liste
+        statut: true,
+        photoUrl: true,
+        poste: { select: { nom: true } },
+        equipe: { select: { nom: true } },
       },
     });
+
     return NextResponse.json(users);
   } catch (error) {
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
 
-// Fonction POST : Pour ajouter un utilisateur
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { nom, prenom, email, password, role, statut, matricule, cin, cnss, tauxHoraire } = body;
+    const {
+      nom, prenom, email, password, role, statut,
+      matricule, cin, cnss, tauxHoraire, telephone,
+      posteId, typeContratId, salaireBase,
+      indemniteTransport, autreIndemnite,
+      dateDebutContrat, dateFinContrat,
+    } = body;
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password || "Chantier2024!", 10);
 
     const user = await db.user.create({
       data: {
@@ -36,12 +44,31 @@ export async function POST(req: Request) {
         prenom,
         email,
         password: hashedPassword,
-        role,
-        statut,
-        matricule,
-        cin,
-        cnss,
-        tauxHoraire,
+        role: role || "OUVRIER",
+        statut: statut || "ACTIF",
+        matricule: matricule || null,
+        cin: cin || null,
+        cnss: cnss || null,
+        telephone: telephone || null,
+        tauxHoraire: tauxHoraire || null,
+        salaireBase: salaireBase || null,
+        indemniteTransport: indemniteTransport || null,
+        autreIndemnite: autreIndemnite || null,
+        posteId: posteId || null,
+        typeContratId: typeContratId || null,
+        dateDebutContrat: dateDebutContrat ? new Date(dateDebutContrat) : null,
+        dateFinContrat: dateFinContrat ? new Date(dateFinContrat) : null,
+      },
+      select: {
+        id: true,
+        nom: true,
+        prenom: true,
+        matricule: true,
+        role: true,
+        statut: true,
+        photoUrl: true,
+        poste: { select: { nom: true } },
+        equipe: { select: { nom: true } },
       },
     });
 
