@@ -41,6 +41,9 @@ export default function TarifsContratPage() {
   const [showModal, setShowModal] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [showAddPoste, setShowAddPoste] = useState(false);
+  const [newPosteNom, setNewPosteNom] = useState("");
+
 
   const emptyForm = {
     type: "MO",
@@ -118,6 +121,19 @@ export default function TarifsContratPage() {
     });
     await loadData();
   };
+  const handleAddPoste = async () => {
+  if (!newPosteNom.trim()) return;
+  const res = await fetch("/api/ref", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ table: "poste", data: { nom: newPosteNom } }),
+  });
+  const newPoste = await res.json();
+  setPostes((prev) => [...prev, newPoste]);
+  setForm((prev: any) => ({ ...prev, posteId: newPoste.id }));
+  setNewPosteNom("");
+  setShowAddPoste(false);
+};
 
   const tarifsMO = tarifs.filter((t) => t.type === "MO");
   const tarifsMat = tarifs.filter((t) => t.type === "MATERIEL");
@@ -340,13 +356,21 @@ export default function TarifsContratPage() {
 
               {form.type === "MO" && (
                 <div>
-                  <label style={labelStyle}>POSTE <span style={{ color: "#ef4444" }}>*</span></label>
-                  <select style={inputStyle} value={form.posteId} onChange={(e) => setForm({ ...form, posteId: e.target.value })}>
-                    <option value="">— Sélectionner un poste —</option>
-                    {postes.map((p) => <option key={p.id} value={p.id}>{p.nom}</option>)}
-                  </select>
+                    <label style={labelStyle}>POSTE <span style={{ color: "#ef4444" }}>*</span></label>
+                    <div style={{ display: "flex", gap: "8px" }}>
+                    <select style={{ ...inputStyle, flex: 1 }} value={form.posteId} onChange={(e) => setForm({ ...form, posteId: e.target.value })}>
+                        <option value="">— Sélectionner un poste —</option>
+                        {postes.map((p) => <option key={p.id} value={p.id}>{p.nom}</option>)}
+                    </select>
+                    <button
+                        onClick={() => setShowAddPoste(true)}
+                        style={{ padding: "8px 12px", background: "#f0f9ff", border: "1px solid #0070f3", borderRadius: "6px", color: "#0070f3", cursor: "pointer", fontWeight: "bold", whiteSpace: "nowrap" }}
+                    >
+                        + Nouveau
+                    </button>
+                    </div>
                 </div>
-              )}
+                )}
 
               {form.type === "MATERIEL" && (
                 <div>
@@ -403,4 +427,30 @@ export default function TarifsContratPage() {
       )}
     </div>
   );
+  {showAddPoste && (
+  <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1100 }}>
+    <div style={{ background: "white", borderRadius: "12px", padding: "24px", width: "360px", boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}>
+      <h3 style={{ margin: "0 0 16px", fontSize: "16px" }}>Nouveau poste</h3>
+      <input
+        type="text"
+        placeholder="Nom du poste..."
+        value={newPosteNom}
+        onChange={(e) => setNewPosteNom(e.target.value)}
+        onKeyDown={(e) => e.key === "Enter" && handleAddPoste()}
+        style={{ width: "100%", padding: "10px 12px", border: "1px solid #ddd", borderRadius: "6px", fontSize: "14px", marginBottom: "16px", boxSizing: "border-box" }}
+        autoFocus
+      />
+      <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+        <button onClick={() => setShowAddPoste(false)}
+          style={{ padding: "8px 16px", border: "1px solid #ddd", borderRadius: "6px", background: "white", cursor: "pointer" }}>
+          Annuler
+        </button>
+        <button onClick={handleAddPoste}
+          style={{ padding: "8px 16px", background: "#0070f3", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "bold" }}>
+          Ajouter
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 }
