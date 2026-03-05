@@ -248,124 +248,120 @@ export default function RapportPage() {
           </div>
 
           {/* Totaux */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "12px", marginBottom: "16px" }}>
-            {[
-              { label: "Total Heures", value: `${rapport.totaux.totalHeures}h`, color: "#0070f3", bg: "#f0f9ff" },
-              { label: "Total MO", value: `${rapport.totaux.totalCoutMO.toFixed(2)} DH`, color: "#0070f3", bg: "#f0f9ff" },
-              { label: "Total Matériel", value: `${rapport.totaux.totalCoutMat.toFixed(2)} DH`, color: "#f59e0b", bg: "#fffbeb" },
-              { label: "Total HT", value: `${rapport.totaux.totalHT.toFixed(2)} DH`, color: "#10b981", bg: "#f0fdf4" },
-            ].map((item) => (
-              <div key={item.label} style={{ background: item.bg, borderRadius: "10px", padding: "16px", textAlign: "center" }}>
-                <div style={{ fontSize: "20px", fontWeight: "bold", color: item.color }}>{item.value}</div>
-                <div style={{ fontSize: "12px", color: "#666", marginTop: "4px" }}>{item.label}</div>
-              </div>
-            ))}
-          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px", marginBottom: "16px" }}>
+  {[
+    { label: "Total Heures MO", value: `${rapport.totaux.totalHeures}h`, color: "#0070f3", bg: "#f0f9ff" },
+    { label: "Employés", value: `${rapport.resumeEmployes.length} pers.`, color: "#6366f1", bg: "#f5f3ff" },
+    { label: "Matériel", value: `${rapport.resumeMateriel.length} équip.`, color: "#f59e0b", bg: "#fffbeb" },
+  ].map((item) => (
+    <div key={item.label} style={{ background: item.bg, borderRadius: "10px", padding: "16px", textAlign: "center" }}>
+      <div style={{ fontSize: "22px", fontWeight: "bold", color: item.color }}>{item.value}</div>
+      <div style={{ fontSize: "12px", color: "#666", marginTop: "4px" }}>{item.label}</div>
+    </div>
+  ))}
+</div>
 
           {/* Tableau employés */}
-          {rapport.resumeEmployes.length > 0 && (
-            <div style={{ background: "white", borderRadius: "10px", boxShadow: "0 1px 6px rgba(0,0,0,0.08)", overflow: "hidden", marginBottom: "16px" }}>
-              <div style={{ padding: "16px 20px", borderBottom: "1px solid #e5e7eb", fontWeight: "bold", fontSize: "15px" }}>
-                👷 Récapitulatif Main d'œuvre
-              </div>
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                <thead>
-                  <tr style={{ background: "#f8fafc", borderBottom: "2px solid #e5e7eb" }}>
-                    <th style={{ padding: "10px 16px", textAlign: "left", fontSize: "12px", color: "#666", fontWeight: "bold" }}>EMPLOYÉ</th>
-                    <th style={{ padding: "10px 16px", textAlign: "left", fontSize: "12px", color: "#666", fontWeight: "bold" }}>POSTE</th>
-                    <th style={{ padding: "10px 16px", textAlign: "center", fontSize: "12px", color: "#666", fontWeight: "bold" }}>JOURS</th>
-                    <th style={{ padding: "10px 16px", textAlign: "center", fontSize: "12px", color: "#666", fontWeight: "bold" }}>HEURES</th>
-                    {(type === "MENSUEL_VALORISE") && (
-                      <th style={{ padding: "10px 16px", textAlign: "right", fontSize: "12px", color: "#666", fontWeight: "bold" }}>MONTANT</th>
-                    )}
-                  </tr>
-                </thead>
-                <tbody>
-                  {rapport.resumeEmployes.map((e) => (
-                    <tr key={e.user.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                      <td style={{ padding: "10px 16px" }}>
-                        <div style={{ fontWeight: "bold", fontSize: "14px" }}>{e.user.nom} {e.user.prenom}</div>
-                        <div style={{ fontSize: "11px", color: "#999" }}>{e.user.matricule || "—"}</div>
-                      </td>
-                      <td style={{ padding: "10px 16px", fontSize: "13px", color: "#555" }}>
-                        {e.user.poste?.nom || "—"}
-                      </td>
-                      <td style={{ padding: "10px 16px", textAlign: "center", fontWeight: "bold" }}>
-                        {e.jours}
-                      </td>
-                      <td style={{ padding: "10px 16px", textAlign: "center", fontWeight: "bold", color: "#0070f3" }}>
-                        {e.totalHeures}h
-                      </td>
-                      {(type === "MENSUEL_VALORISE") && (
-                        <td style={{ padding: "10px 16px", textAlign: "right", fontWeight: "bold", color: "#0070f3" }}>
-                          {e.totalMontant.toFixed(2)} DH
-                        </td>
-                      )}
-                    </tr>
-                  ))}
-                </tbody>
-                <tfoot>
-                  <tr style={{ background: "#f0f9ff", borderTop: "2px solid #e5e7eb" }}>
-                    <td colSpan={2} style={{ padding: "10px 16px", fontWeight: "bold" }}>TOTAL</td>
-                    <td style={{ padding: "10px 16px", textAlign: "center", fontWeight: "bold" }}>
-                      —
-                    </td>
-                    <td style={{ padding: "10px 16px", textAlign: "center", fontWeight: "bold", color: "#0070f3" }}>
-                      {rapport.totaux.totalHeures}h
-                    </td>
-                    {(type === "MENSUEL_VALORISE") && (
-                      <td style={{ padding: "10px 16px", textAlign: "right", fontWeight: "bold", color: "#0070f3" }}>
-                        {rapport.totaux.totalCoutMO.toFixed(2)} DH
-                      </td>
-                    )}
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
+         {rapport.resumeEmployes.length > 0 && (
+  <div style={{ background: "white", borderRadius: "10px", boxShadow: "0 1px 6px rgba(0,0,0,0.08)", overflow: "hidden", marginBottom: "16px" }}>
+    <div style={{ padding: "16px 20px", borderBottom: "1px solid #e5e7eb", fontWeight: "bold", fontSize: "15px" }}>
+      👷 Récapitulatif Main d'œuvre
+    </div>
+    <table style={{ width: "100%", borderCollapse: "collapse" }}>
+      <thead>
+        <tr style={{ background: "#f8fafc", borderBottom: "2px solid #e5e7eb" }}>
+          <th style={{ padding: "10px 16px", textAlign: "left", fontSize: "12px", color: "#666", fontWeight: "bold" }}>EMPLOYÉ</th>
+          <th style={{ padding: "10px 16px", textAlign: "left", fontSize: "12px", color: "#666", fontWeight: "bold" }}>POSTE</th>
+          <th style={{ padding: "10px 16px", textAlign: "center", fontSize: "12px", color: "#666", fontWeight: "bold" }}>JOURS</th>
+          <th style={{ padding: "10px 16px", textAlign: "center", fontSize: "12px", color: "#666", fontWeight: "bold" }}>HEURES</th>
+          {type === "MENSUEL_VALORISE" && (
+            <th style={{ padding: "10px 16px", textAlign: "right", fontSize: "12px", color: "#666", fontWeight: "bold" }}>MONTANT</th>
           )}
+        </tr>
+      </thead>
+      <tbody>
+        {rapport.resumeEmployes.map((e) => (
+          <tr key={e.user.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
+            <td style={{ padding: "10px 16px" }}>
+              <div style={{ fontWeight: "bold", fontSize: "14px" }}>{e.user.nom} {e.user.prenom}</div>
+              <div style={{ fontSize: "11px", color: "#999" }}>{e.user.matricule || "—"}</div>
+            </td>
+            <td style={{ padding: "10px 16px", fontSize: "13px", color: "#555" }}>
+              {e.user.poste?.nom || "—"}
+            </td>
+            <td style={{ padding: "10px 16px", textAlign: "center", fontWeight: "bold" }}>
+              {e.jours}
+            </td>
+            <td style={{ padding: "10px 16px", textAlign: "center", fontWeight: "bold", color: "#0070f3" }}>
+              {e.totalHeures}h
+            </td>
+            {type === "MENSUEL_VALORISE" && (
+              <td style={{ padding: "10px 16px", textAlign: "right", fontWeight: "bold", color: "#0070f3" }}>
+                {e.totalMontant.toFixed(2)} DH
+              </td>
+            )}
+          </tr>
+        ))}
+      </tbody>
+      <tfoot>
+        <tr style={{ background: "#f0f9ff", borderTop: "2px solid #e5e7eb" }}>
+          <td colSpan={2} style={{ padding: "10px 16px", fontWeight: "bold" }}>TOTAL</td>
+          <td style={{ padding: "10px 16px", textAlign: "center", fontWeight: "bold" }}>—</td>
+          <td style={{ padding: "10px 16px", textAlign: "center", fontWeight: "bold", color: "#0070f3" }}>
+            {rapport.totaux.totalHeures}h
+          </td>
+          {type === "MENSUEL_VALORISE" && (
+            <td style={{ padding: "10px 16px", textAlign: "right", fontWeight: "bold", color: "#0070f3" }}>
+              {rapport.totaux.totalCoutMO.toFixed(2)} DH
+            </td>
+          )}
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+)}
 
           {/* Tableau matériel */}
-          {rapport.resumeMateriel.length > 0 && (
-            <div style={{ background: "white", borderRadius: "10px", boxShadow: "0 1px 6px rgba(0,0,0,0.08)", overflow: "hidden", marginBottom: "16px" }}>
-              <div style={{ padding: "16px 20px", borderBottom: "1px solid #e5e7eb", fontWeight: "bold", fontSize: "15px" }}>
-                🔧 Récapitulatif Matériel
-              </div>
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                <thead>
-                  <tr style={{ background: "#f8fafc", borderBottom: "2px solid #e5e7eb" }}>
-                    <th style={{ padding: "10px 16px", textAlign: "left", fontSize: "12px", color: "#666", fontWeight: "bold" }}>MATÉRIEL</th>
-                    <th style={{ padding: "10px 16px", textAlign: "left", fontSize: "12px", color: "#666", fontWeight: "bold" }}>CATÉGORIE</th>
-                    <th style={{ padding: "10px 16px", textAlign: "center", fontSize: "12px", color: "#666", fontWeight: "bold" }}>JOURS</th>
-                    {(type === "MENSUEL_VALORISE") && (
-                      <th style={{ padding: "10px 16px", textAlign: "right", fontSize: "12px", color: "#666", fontWeight: "bold" }}>MONTANT</th>
-                    )}
-                  </tr>
-                </thead>
-                <tbody>
-                  {rapport.resumeMateriel.map((m) => (
-                    <tr key={m.materiel.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                      <td style={{ padding: "10px 16px" }}>
-                        <div style={{ fontWeight: "bold", fontSize: "14px" }}>{m.materiel.nom}</div>
-                        <div style={{ fontSize: "11px", color: "#999" }}>{m.materiel.code}</div>
-                      </td>
-                      <td style={{ padding: "10px 16px", fontSize: "13px", color: "#555" }}>
-                        {m.materiel.categorie?.nom || "—"}
-                      </td>
-                      <td style={{ padding: "10px 16px", textAlign: "center", fontWeight: "bold" }}>
-                        {m.totalJours}j
-                      </td>
-                      {(type === "MENSUEL_VALORISE") && (
-                        <td style={{ padding: "10px 16px", textAlign: "right", fontWeight: "bold", color: "#f59e0b" }}>
-                          {m.totalMontant.toFixed(2)} DH
-                        </td>
-                      )}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+        {rapport.resumeMateriel.length > 0 && (
+  <div style={{ background: "white", borderRadius: "10px", boxShadow: "0 1px 6px rgba(0,0,0,0.08)", overflow: "hidden", marginBottom: "16px" }}>
+    <div style={{ padding: "16px 20px", borderBottom: "1px solid #e5e7eb", fontWeight: "bold", fontSize: "15px" }}>
+      🔧 Récapitulatif Matériel
+    </div>
+    <table style={{ width: "100%", borderCollapse: "collapse" }}>
+      <thead>
+        <tr style={{ background: "#f8fafc", borderBottom: "2px solid #e5e7eb" }}>
+          <th style={{ padding: "10px 16px", textAlign: "left", fontSize: "12px", color: "#666", fontWeight: "bold" }}>MATÉRIEL</th>
+          <th style={{ padding: "10px 16px", textAlign: "left", fontSize: "12px", color: "#666", fontWeight: "bold" }}>CATÉGORIE</th>
+          <th style={{ padding: "10px 16px", textAlign: "center", fontSize: "12px", color: "#666", fontWeight: "bold" }}>JOURS</th>
+          {type === "MENSUEL_VALORISE" && (
+            <th style={{ padding: "10px 16px", textAlign: "right", fontSize: "12px", color: "#666", fontWeight: "bold" }}>MONTANT</th>
           )}
-
+        </tr>
+      </thead>
+      <tbody>
+        {rapport.resumeMateriel.map((m) => (
+          <tr key={m.materiel.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
+            <td style={{ padding: "10px 16px" }}>
+              <div style={{ fontWeight: "bold", fontSize: "14px" }}>{m.materiel.nom}</div>
+              <div style={{ fontSize: "11px", color: "#999" }}>{m.materiel.code}</div>
+            </td>
+            <td style={{ padding: "10px 16px", fontSize: "13px", color: "#555" }}>
+              {m.materiel.categorie?.nom || "—"}
+            </td>
+            <td style={{ padding: "10px 16px", textAlign: "center", fontWeight: "bold" }}>
+              {m.totalJours}j
+            </td>
+            {type === "MENSUEL_VALORISE" && (
+              <td style={{ padding: "10px 16px", textAlign: "right", fontWeight: "bold", color: "#f59e0b" }}>
+                {m.totalMontant.toFixed(2)} DH
+              </td>
+            )}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+)}
           {/* Total valorisé */}
           {type === "MENSUEL_VALORISE" && (
             <div style={{ background: "white", borderRadius: "10px", padding: "24px", boxShadow: "0 1px 6px rgba(0,0,0,0.08)", marginBottom: "16px", border: "2px solid #0070f3" }}>
