@@ -20,10 +20,6 @@ type Contrat = {
   client: { nom: string };
 };
 
-type Ref = {
-  postes: { id: string; nom: string }[];
-};
-
 type Materiel = {
   id: string;
   nom: string;
@@ -43,7 +39,9 @@ export default function TarifsContratPage() {
   const [error, setError] = useState("");
   const [showAddPoste, setShowAddPoste] = useState(false);
   const [newPosteNom, setNewPosteNom] = useState("");
-
+  const [showAddMateriel, setShowAddMateriel] = useState(false);
+  const [newMaterielNom, setNewMaterielNom] = useState("");
+  const [newMaterielCode, setNewMaterielCode] = useState("");
 
   const emptyForm = {
     type: "MO",
@@ -121,19 +119,35 @@ export default function TarifsContratPage() {
     });
     await loadData();
   };
+
   const handleAddPoste = async () => {
-  if (!newPosteNom.trim()) return;
-  const res = await fetch("/api/ref", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ table: "poste", data: { nom: newPosteNom } }),
-  });
-  const newPoste = await res.json();
-  setPostes((prev) => [...prev, newPoste]);
-  setForm((prev: any) => ({ ...prev, posteId: newPoste.id }));
-  setNewPosteNom("");
-  setShowAddPoste(false);
-};
+    if (!newPosteNom.trim()) return;
+    const res = await fetch("/api/ref", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ table: "poste", data: { nom: newPosteNom } }),
+    });
+    const newPoste = await res.json();
+    setPostes((prev) => [...prev, newPoste]);
+    setForm((prev: any) => ({ ...prev, posteId: newPoste.id }));
+    setNewPosteNom("");
+    setShowAddPoste(false);
+  };
+
+  const handleAddMateriel = async () => {
+    if (!newMaterielNom.trim() || !newMaterielCode.trim()) return;
+    const res = await fetch("/api/admin/materiel", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nom: newMaterielNom, code: newMaterielCode.toUpperCase() }),
+    });
+    const newMat = await res.json();
+    setMateriels((prev) => [...prev, newMat]);
+    setForm((prev: any) => ({ ...prev, materielId: newMat.id }));
+    setNewMaterielNom("");
+    setNewMaterielCode("");
+    setShowAddMateriel(false);
+  };
 
   const tarifsMO = tarifs.filter((t) => t.type === "MO");
   const tarifsMat = tarifs.filter((t) => t.type === "MATERIEL");
@@ -206,7 +220,6 @@ export default function TarifsContratPage() {
               {tarifsMO.length} tarif(s)
             </span>
           </div>
-
           {tarifsMO.length === 0 ? (
             <div style={{ padding: "30px", textAlign: "center", color: "#999", fontSize: "13px" }}>
               Aucun tarif MO défini
@@ -245,10 +258,8 @@ export default function TarifsContratPage() {
                         ) : <span style={{ color: "#ccc" }}>—</span>}
                       </td>
                       <td style={{ padding: "10px 16px", textAlign: "center" }}>
-                        <button
-                          onClick={() => handleDelete(t.id)}
-                          style={{ background: "#fee2e2", color: "#ef4444", border: "none", borderRadius: "4px", cursor: "pointer", padding: "4px 10px", fontSize: "13px" }}
-                        >
+                        <button onClick={() => handleDelete(t.id)}
+                          style={{ background: "#fee2e2", color: "#ef4444", border: "none", borderRadius: "4px", cursor: "pointer", padding: "4px 10px", fontSize: "13px" }}>
                           ✕
                         </button>
                       </td>
@@ -268,7 +279,6 @@ export default function TarifsContratPage() {
               {tarifsMat.length} tarif(s)
             </span>
           </div>
-
           {tarifsMat.length === 0 ? (
             <div style={{ padding: "30px", textAlign: "center", color: "#999", fontSize: "13px" }}>
               Aucun tarif matériel défini
@@ -308,10 +318,8 @@ export default function TarifsContratPage() {
                         ) : <span style={{ color: "#ccc" }}>—</span>}
                       </td>
                       <td style={{ padding: "10px 16px", textAlign: "center" }}>
-                        <button
-                          onClick={() => handleDelete(t.id)}
-                          style={{ background: "#fee2e2", color: "#ef4444", border: "none", borderRadius: "4px", cursor: "pointer", padding: "4px 10px", fontSize: "13px" }}
-                        >
+                        <button onClick={() => handleDelete(t.id)}
+                          style={{ background: "#fee2e2", color: "#ef4444", border: "none", borderRadius: "4px", cursor: "pointer", padding: "4px 10px", fontSize: "13px" }}>
                           ✕
                         </button>
                       </td>
@@ -324,13 +332,11 @@ export default function TarifsContratPage() {
         </div>
       </div>
 
-      {/* Modal */}
+      {/* Modal principal */}
       {showModal && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
           <div style={{ background: "white", borderRadius: "12px", padding: "28px", width: "480px", boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}>
-            <h3 style={{ margin: "0 0 20px", fontSize: "18px", fontWeight: "bold" }}>
-              Nouveau tarif
-            </h3>
+            <h3 style={{ margin: "0 0 20px", fontSize: "18px", fontWeight: "bold" }}>Nouveau tarif</h3>
 
             {error && (
               <div style={{ background: "#fee2e2", borderRadius: "6px", padding: "10px 14px", marginBottom: "16px", color: "#dc2626", fontSize: "13px" }}>
@@ -356,29 +362,33 @@ export default function TarifsContratPage() {
 
               {form.type === "MO" && (
                 <div>
-                    <label style={labelStyle}>POSTE <span style={{ color: "#ef4444" }}>*</span></label>
-                    <div style={{ display: "flex", gap: "8px" }}>
+                  <label style={labelStyle}>POSTE <span style={{ color: "#ef4444" }}>*</span></label>
+                  <div style={{ display: "flex", gap: "8px" }}>
                     <select style={{ ...inputStyle, flex: 1 }} value={form.posteId} onChange={(e) => setForm({ ...form, posteId: e.target.value })}>
-                        <option value="">— Sélectionner un poste —</option>
-                        {postes.map((p) => <option key={p.id} value={p.id}>{p.nom}</option>)}
+                      <option value="">— Sélectionner un poste —</option>
+                      {postes.map((p) => <option key={p.id} value={p.id}>{p.nom}</option>)}
                     </select>
-                    <button
-                        onClick={() => setShowAddPoste(true)}
-                        style={{ padding: "8px 12px", background: "#f0f9ff", border: "1px solid #0070f3", borderRadius: "6px", color: "#0070f3", cursor: "pointer", fontWeight: "bold", whiteSpace: "nowrap" }}
-                    >
-                        + Nouveau
+                    <button onClick={() => setShowAddPoste(true)}
+                      style={{ padding: "8px 12px", background: "#f0f9ff", border: "1px solid #0070f3", borderRadius: "6px", color: "#0070f3", cursor: "pointer", fontWeight: "bold", whiteSpace: "nowrap" }}>
+                      + Nouveau
                     </button>
-                    </div>
+                  </div>
                 </div>
-                )}
+              )}
 
               {form.type === "MATERIEL" && (
                 <div>
                   <label style={labelStyle}>MATÉRIEL <span style={{ color: "#ef4444" }}>*</span></label>
-                  <select style={inputStyle} value={form.materielId} onChange={(e) => setForm({ ...form, materielId: e.target.value })}>
-                    <option value="">— Sélectionner un matériel —</option>
-                    {materiels.map((m) => <option key={m.id} value={m.id}>{m.nom} ({m.code})</option>)}
-                  </select>
+                  <div style={{ display: "flex", gap: "8px" }}>
+                    <select style={{ ...inputStyle, flex: 1 }} value={form.materielId} onChange={(e) => setForm({ ...form, materielId: e.target.value })}>
+                      <option value="">— Sélectionner un matériel —</option>
+                      {materiels.map((m) => <option key={m.id} value={m.id}>{m.nom} ({m.code})</option>)}
+                    </select>
+                    <button onClick={() => setShowAddMateriel(true)}
+                      style={{ padding: "8px 12px", background: "#fffbeb", border: "1px solid #f59e0b", borderRadius: "6px", color: "#d97706", cursor: "pointer", fontWeight: "bold", whiteSpace: "nowrap" }}>
+                      + Nouveau
+                    </button>
+                  </div>
                 </div>
               )}
 
@@ -401,12 +411,11 @@ export default function TarifsContratPage() {
                 </div>
               </div>
 
-              {/* Aperçu marge */}
               {form.tauxFacture && form.tauxRevient && (
                 <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "8px", padding: "12px 16px" }}>
                   <div style={{ fontSize: "13px", color: "#166534", fontWeight: "bold" }}>
                     Marge : {(parseFloat(form.tauxFacture) - parseFloat(form.tauxRevient)).toFixed(2)} DH
-                    ({((( parseFloat(form.tauxFacture) - parseFloat(form.tauxRevient)) / parseFloat(form.tauxFacture)) * 100).toFixed(1)}%)
+                    ({(((parseFloat(form.tauxFacture) - parseFloat(form.tauxRevient)) / parseFloat(form.tauxFacture)) * 100).toFixed(1)}%)
                   </div>
                 </div>
               )}
@@ -425,32 +434,76 @@ export default function TarifsContratPage() {
           </div>
         </div>
       )}
+
+      {/* Modal ajout poste */}
+      {showAddPoste && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1200 }}>
+          <div style={{ background: "white", borderRadius: "12px", padding: "24px", width: "360px", boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}>
+            <h3 style={{ margin: "0 0 16px", fontSize: "16px" }}>Nouveau poste</h3>
+            <input
+              type="text"
+              placeholder="Nom du poste..."
+              value={newPosteNom}
+              onChange={(e) => setNewPosteNom(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleAddPoste()}
+              style={{ width: "100%", padding: "10px 12px", border: "1px solid #ddd", borderRadius: "6px", fontSize: "14px", marginBottom: "16px", boxSizing: "border-box" }}
+              autoFocus
+            />
+            <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+              <button onClick={() => setShowAddPoste(false)}
+                style={{ padding: "8px 16px", border: "1px solid #ddd", borderRadius: "6px", background: "white", cursor: "pointer" }}>
+                Annuler
+              </button>
+              <button onClick={handleAddPoste}
+                style={{ padding: "8px 16px", background: "#0070f3", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "bold" }}>
+                Ajouter
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal ajout matériel */}
+      {showAddMateriel && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1200 }}>
+          <div style={{ background: "white", borderRadius: "12px", padding: "24px", width: "400px", boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}>
+            <h3 style={{ margin: "0 0 16px", fontSize: "16px" }}>Nouveau matériel</h3>
+            <div style={{ marginBottom: "12px" }}>
+              <label style={{ fontSize: "11px", fontWeight: "bold", color: "#666", display: "block", marginBottom: "4px" }}>NOM *</label>
+              <input
+                type="text"
+                placeholder="Nom du matériel..."
+                value={newMaterielNom}
+                onChange={(e) => setNewMaterielNom(e.target.value)}
+                style={{ width: "100%", padding: "10px 12px", border: "1px solid #ddd", borderRadius: "6px", fontSize: "14px", boxSizing: "border-box" }}
+                autoFocus
+              />
+            </div>
+            <div style={{ marginBottom: "16px" }}>
+              <label style={{ fontSize: "11px", fontWeight: "bold", color: "#666", display: "block", marginBottom: "4px" }}>CODE *</label>
+              <input
+                type="text"
+                placeholder="Ex: MAT-001"
+                value={newMaterielCode}
+                onChange={(e) => setNewMaterielCode(e.target.value.toUpperCase())}
+                onKeyDown={(e) => e.key === "Enter" && handleAddMateriel()}
+                style={{ width: "100%", padding: "10px 12px", border: "1px solid #ddd", borderRadius: "6px", fontSize: "14px", boxSizing: "border-box" }}
+              />
+            </div>
+            <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+              <button onClick={() => setShowAddMateriel(false)}
+                style={{ padding: "8px 16px", border: "1px solid #ddd", borderRadius: "6px", background: "white", cursor: "pointer" }}>
+                Annuler
+              </button>
+              <button onClick={handleAddMateriel}
+                style={{ padding: "8px 16px", background: "#f59e0b", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "bold" }}>
+                Ajouter
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
-  {showAddPoste && (
-  <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1100 }}>
-    <div style={{ background: "white", borderRadius: "12px", padding: "24px", width: "360px", boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}>
-      <h3 style={{ margin: "0 0 16px", fontSize: "16px" }}>Nouveau poste</h3>
-      <input
-        type="text"
-        placeholder="Nom du poste..."
-        value={newPosteNom}
-        onChange={(e) => setNewPosteNom(e.target.value)}
-        onKeyDown={(e) => e.key === "Enter" && handleAddPoste()}
-        style={{ width: "100%", padding: "10px 12px", border: "1px solid #ddd", borderRadius: "6px", fontSize: "14px", marginBottom: "16px", boxSizing: "border-box" }}
-        autoFocus
-      />
-      <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-        <button onClick={() => setShowAddPoste(false)}
-          style={{ padding: "8px 16px", border: "1px solid #ddd", borderRadius: "6px", background: "white", cursor: "pointer" }}>
-          Annuler
-        </button>
-        <button onClick={handleAddPoste}
-          style={{ padding: "8px 16px", background: "#0070f3", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "bold" }}>
-          Ajouter
-        </button>
-      </div>
-    </div>
-  </div>
-)}
 }
