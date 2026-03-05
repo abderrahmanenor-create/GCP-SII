@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 type Societe = {
   id: string;
@@ -37,6 +38,7 @@ export default function ContratsPage() {
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<Contrat | null>(null);
   const [saving, setSaving] = useState(false);
+  const router = useRouter();
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [filterStatut, setFilterStatut] = useState("");
@@ -225,13 +227,21 @@ export default function ContratsPage() {
                     {c._count.projets}
                   </td>
                   <td style={{ padding: "12px 16px", textAlign: "center" }}>
-                    <button
-                      onClick={() => openEdit(c)}
-                      style={{ padding: "6px 14px", background: "#0070f3", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: "bold" }}
-                    >
-                      Modifier
-                    </button>
-                  </td>
+  <div style={{ display: "flex", gap: "6px", justifyContent: "center" }}>
+    <button
+      onClick={() => openEdit(c)}
+      style={{ padding: "6px 14px", background: "#0070f3", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: "bold" }}
+    >
+      Modifier
+    </button>
+    <button
+      onClick={() => router.push(`/dashboard/admin/contrats/${c.id}/tarifs`)}
+      style={{ padding: "6px 14px", background: "#10b981", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: "bold" }}
+    >
+      💰 Tarifs
+    </button>
+  </div>
+</td>
                 </tr>
               ))}
             </tbody>
