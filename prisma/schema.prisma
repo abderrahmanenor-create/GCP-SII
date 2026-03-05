@@ -16,6 +16,7 @@ model RefPoste {
   nom       String   @unique
   actif     Boolean  @default(true)
   users     User[]
+  tarifs    TarifContrat[]
 }
 
 model RefTypeContrat {
@@ -94,6 +95,7 @@ model Contrat {
   projets           Projet[]
   factures          Facture[]
   createdAt         DateTime @default(now())
+  tarifs    TarifContrat[]
 }
 
 model Projet {
@@ -366,6 +368,7 @@ model Materiel {
   prochaineInspOutillage DateTime?
 
   affectations        AffectationMateriel[]
+  tarifs              TarifContrat[]
   createdAt           DateTime              @default(now())
 }
 
@@ -424,5 +427,19 @@ model Commentaire {
   auteurId    String
   auteur      User      @relation(fields: [auteurId], references: [id])
   rapport     RapportChantier? @relation(fields: [entiteId], references: [id])
+  createdAt   DateTime  @default(now())
+}
+model TarifContrat {
+  id          String    @id @default(uuid())
+  contratId   String
+  contrat     Contrat   @relation(fields: [contratId], references: [id])
+  type        String
+  posteId     String?
+  poste       RefPoste? @relation(fields: [posteId], references: [id])
+  materielId  String?
+  materiel    Materiel? @relation(fields: [materielId], references: [id])
+  tauxFacture Float
+  tauxRevient Float?
+  unite       String    @default("HEURE")
   createdAt   DateTime  @default(now())
 }
