@@ -69,7 +69,177 @@ function Avatar({ user }: { user: User }) {
     </div>
   );
 }
+function DocumentsSection({ userId }: { userId: string }) {
+  const [docs, setDocs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({ type: "CIN", nom: "", expiration: "", remarque: "" });
 
+  const TYPES_DOC = [
+    { value: "CIN", label: "Carte d'identité", icon: "🪪" },
+    { value: "CNSS", label: "CNSS", icon: "🏥" },
+    { value: "CONTRAT", label: "Contrat de travail", icon: "📄" },
+    { value: "DIPLOME", label: "Diplôme", icon: "🎓" },
+    { value: "VISITE_MEDICALE", label: "Visite médicale", icon: "🩺" },
+    { value: "CACES", label: "CACES", icon: "🏗️" },
+    { value: "HABILITATION", label: "Habilitation", icon: "⚡" },
+    { value: "AUTRE", label: "Autre", icon: "📎" },
+  ];
+
+  useEffect(() => { loadDocs(); }, [userId]);
+
+  const loadDocs = async () => {
+    setLoading(true);
+    const res = await fetch(`/api/rh/documents?userId=${userId}`);
+    const data = await res.json();
+    setDocs(Array.isArray(data) ? data : []);
+    setLoading(false);
+  };
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+
+    const fd = new FormData();
+    fd.append("file", file);
+    fd.append("userId", userId);
+    fd.append("type", form.type);
+
+    const uploadRes = await fetch("/api/rh/upload", { method: "POST", body: fd });
+    const uploadData = await uploadRes.json();
+
+    if (uploadData.url) {
+      await fetch("/api/rh/documents", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId,
+          type: form.type,
+          nom: form.nom || file.name,
+          url: uploadData.url,
+          taille: uploadData.taille,
+          expiration: form.expiration || null,
+          remarque: form.remarque || null,
+        }),
+      });
+      await loadDocs();
+      setShowForm(false);
+      setForm({ type: "CIN", nom: "", expiration: "", remarque: "" });
+    }
+    setUploading(false);
+    e.target.value = "";
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Supprimer ce document ?")) return;
+    await fetch(`/api/rh/documents?id=${id}`, { method: "DELETE" });
+    await loadDocs();
+  };
+
+  const typeInfo = (type: string) => TYPES_DOC.find(t => t.value === type) || { icon: "📎", label: type };
+
+  return (
+    <div style={{ marginBottom: "20px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+        <div style={{ fontSize: "12px", fontWeight: "bold", color: "#666", textTransform: "uppercase" }}>
+          Documents ({docs.length})
+        </div>
+        <button onClick={() => setShowForm(!showForm)}
+          style={{ fontSize: "11px", background: "#f0f9ff", color: "#0070f3", border: "1px solid #bae6fd", borderRadius: "5px", padding: "3px 10px", cursor: "pointer", fontWeight: "bold" }}>
+          + Ajouter
+        </button>
+      </div>
+
+      {showForm && (
+        <div style={{ background: "#f8fafc", borderRadius: "8px", padding: "12px", marginBottom: "10px", border: "1px solid #e5e7eb" }}>
+          <div style={{ marginBottom: "8px" }}>
+            <label style={{ fontSize: "11px", fontWeight: "bold", color: "#666", display: "block", marginBottom: "3px" }}>TYPE</label>
+            <select value={form.type} onChange={e => setForm({ ...form, type: e.target.value })}
+              style={{ width: "100%", padding: "6px 10px", border: "1px solid #ddd", borderRadius: "5px", fontSize: "13px" }}>
+              {TYPES_DOC.map(t => <option key={t.value} value={t.value}>{t.icon} {t.label}</option>)}
+            </select>
+          </div>
+          <div style={{ marginBottom: "8px" }}>
+            <label style={{ fontSize: "11px", fontWeight: "bold", color: "#666", display: "block", marginBottom: "3px" }}>NOM DU DOCUMENT</label>
+            <input type="text" placeholder="Ex: CIN recto-verso" value={form.nom}
+              onChange={e => setForm({ ...form, nom: e.target.value })}
+              style={{ width: "100%", padding: "6px 10px", border: "1px solid #ddd", borderRadius: "5px", fontSize: "13px", boxSizing: "border-box" }} />
+          </div>
+          <div style={{ marginBottom: "8px" }}>
+            <label style={{ fontSize: "11px", fontWeight: "bold", color: "#666", display: "block", marginBottom: "3px" }}>DATE EXPIRATION (optionnel)</label>
+            <input type="date" value={form.expiration} onChange={e => setForm({ ...form, expiration: e.target.value })}
+              style={{ width: "100%", padding: "6px 10px", border: "1px solid #ddd", borderRadius: "5px", fontSize: "13px", boxSizing: "border-box" }} />
+          </div>
+          <div style={{ marginBottom: "10px" }}>
+            <label style={{ fontSize: "11px", fontWeight: "bold", color: "#666", display: "block", marginBottom: "3px" }}>REMARQUE</label>
+            <input type="text" placeholder="Optionnel..." value={form.remarque}
+              onChange={e => setForm({ ...form, remarque: e.target.value })}
+              style={{ width: "100%", padding: "6px 10px", border: "1px solid #ddd", borderRadius: "5px", fontSize: "13px", boxSizing: "border-box" }} />
+          </div>
+          <label style={{
+            display: "block", padding: "10px", textAlign: "center",
+            background: uploading ? "#f1f5f9" : "#0070f3", color: uploading ? "#999" : "white",
+            borderRadius: "6px", cursor: uploading ? "not-allowed" : "pointer",
+            fontSize: "13px", fontWeight: "bold",
+          }}>
+            {uploading ? "⏳ Upload en cours..." : "📎 Choisir un fichier et uploader"}
+            <input type="file" style={{ display: "none" }} onChange={handleUpload} disabled={uploading}
+              accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" />
+          </label>
+        </div>
+      )}
+
+      {loading ? (
+        <div style={{ fontSize: "12px", color: "#ccc", textAlign: "center", padding: "10px" }}>Chargement...</div>
+      ) : docs.length === 0 ? (
+        <div style={{ fontSize: "12px", color: "#ccc", textAlign: "center", padding: "10px" }}>Aucun document</div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+          {docs.map(doc => {
+            const t = typeInfo(doc.type);
+            const expJ = doc.expiration ? Math.ceil((new Date(doc.expiration).getTime() - Date.now()) / 86400000) : null;
+            const expAlert = expJ !== null && expJ <= 30;
+            return (
+              <div key={doc.id} style={{
+                padding: "8px 12px", borderRadius: "7px",
+                background: expAlert ? "#fef2f2" : "#f8fafc",
+                border: `1px solid ${expAlert ? "#fca5a5" : "#e5e7eb"}`,
+                display: "flex", justifyContent: "space-between", alignItems: "center",
+              }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: "12px", fontWeight: "bold", display: "flex", alignItems: "center", gap: "5px" }}>
+                    <span>{t.icon}</span>
+                    <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{doc.nom}</span>
+                  </div>
+                  <div style={{ fontSize: "10px", color: "#999", marginTop: "2px" }}>
+                    {t.label}
+                    {doc.expiration && (
+                      <span style={{ marginLeft: "8px", color: expAlert ? "#ef4444" : "#10b981", fontWeight: "bold" }}>
+                        {expJ! < 0 ? `⛔ Expiré (${Math.abs(expJ!)}j)` : expJ! <= 30 ? `⚠️ Expire dans ${expJ}j` : `✅ ${new Date(doc.expiration).toLocaleDateString("fr-FR")}`}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: "4px", marginLeft: "8px" }}>
+                  <a href={doc.url} target="_blank" rel="noopener noreferrer"
+                    style={{ padding: "3px 8px", background: "#f0f9ff", color: "#0070f3", borderRadius: "4px", fontSize: "11px", textDecoration: "none", border: "1px solid #bae6fd" }}>
+                    👁️
+                  </a>
+                  <button onClick={() => handleDelete(doc.id)}
+                    style={{ padding: "3px 8px", background: "#fef2f2", color: "#ef4444", border: "1px solid #fca5a5", borderRadius: "4px", cursor: "pointer", fontSize: "11px" }}>
+                    ✕
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
 export default function RHPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [postes, setPostes] = useState<{ id: string; nom: string }[]>([]);
@@ -545,6 +715,8 @@ export default function RHPage() {
               ))
             )}
           </div>
+          {/* Documents */}
+          <DocumentsSection userId={selected.id} />
 
           {/* Actions */}
           <div style={{ display: "flex", gap: "8px" }}>

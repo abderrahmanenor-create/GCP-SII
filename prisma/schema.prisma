@@ -178,10 +178,18 @@ model User {
   presences        PresenceSite[]
   lignesRegie      LigneRegie[]
   commentaires     Commentaire[]
+  documents        DocumentRH[]
   // Documents
   cinUrl           String?
   cnssUrl          String?
   contratUrl       String?
+  // Documents supplémentaires
+  visiteMedicaleUrl  String?
+  ribUrl             String?
+  adresse            String?
+  dateEmbauche       DateTime?
+  salaire            Float?
+  photo              String?
 }
 
 model Habilitation {
@@ -471,4 +479,16 @@ model TarifContrat {
   tauxRevient Float?
   unite       String    @default("HEURE")
   createdAt   DateTime  @default(now())
+}
+model DocumentRH {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  type        String   // "CIN", "CNSS", "CONTRAT", "DIPLOME", "VISITE_MEDICALE", "CACES", "HABILITATION", "AUTRE"
+  nom         String
+  url         String
+  taille      Int?
+  expiration  DateTime?
+  remarque    String?
+  createdAt   DateTime @default(now())
 }
