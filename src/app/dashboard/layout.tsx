@@ -28,10 +28,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { href: "/dashboard", label: "Accueil", icon: "🏠", exact: true },
     { href: "/dashboard/rh", label: "RH & Ouvriers", icon: "👷" },
     { href: "/dashboard/pointage", label: "Pointage", icon: "⏱️" },
+    { href: "/dashboard/pointage/presence", label: "Présence", icon: "📋" },
     { href: "/dashboard/facturation", label: "Facturation", icon: "🧾" },
     { href: "/dashboard/epi/stock", label: "HSE & EPI", icon: "🦺" },
     { href: "/dashboard/chantier", label: "Chantiers", icon: "🏗️" },
     { href: "/dashboard/admin", label: "Administration", icon: "⚙️" },
+    
   ];
 
   return (

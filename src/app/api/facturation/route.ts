@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
-// Générer numéro facture auto : FAC-2026-0001
 async function genererNumero(): Promise<string> {
   const annee = new Date().getFullYear();
   const derniere = await db.facture.findFirst({
@@ -29,19 +28,15 @@ export async function GET(req: NextRequest) {
     const factures = await db.facture.findMany({
       where,
       include: {
-        client: { select: { id: true, nom: true } },
-        feuilles: {
-          select: {
-            id: true, date: true, totalGeneral: true, totalHeures: true,
-            zone: { select: { nom: true, projet: { select: { nom: true, code: true } } } },
-          },
-        },
+        client: true,
+        feuilles: true,
       },
       orderBy: { createdAt: "desc" },
     });
 
     return NextResponse.json(factures);
   } catch (error: any) {
+    console.error("GET /api/facturation:", error.message);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
@@ -55,21 +50,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Client et feuilles obligatoires" }, { status: 400 });
     }
 
-    // Récupérer les feuilles
     const feuilles = await db.feuilleRegie.findMany({
       where: { id: { in: feuilleIds } },
     });
 
-    if (feuilles.some(f => f.statut !== "VALIDE_CLIENT")) {
+    if (feuilles.some((f: any) => f.statut !== "VALIDE_CLIENT")) {
       return NextResponse.json({ error: "Toutes les feuilles doivent être validées client" }, { status: 400 });
     }
 
-    if (feuilles.some(f => f.factureId)) {
+    if (feuilles.some((f: any) => f.factureId)) {
       return NextResponse.json({ error: "Certaines feuilles sont déjà facturées" }, { status: 400 });
     }
 
-    // Calculs
-    const totalHT = feuilles.reduce((sum, f) => sum + f.totalGeneral, 0);
+    const totalHT = feuilles.reduce((sum: number, f: any) => sum + f.totalGeneral, 0);
     const tva = parseFloat(tauxTVA) || 20;
     const retenue = parseFloat(tauxRetenue) || 0;
     const montantTVA = totalHT * (tva / 100);
@@ -98,17 +91,9 @@ export async function POST(req: NextRequest) {
         client: true,
         feuilles: {
           include: {
-            lignes: {
-              include: {
-                user: { include: { poste: true } },
-              },
-            },
-            affectationsMat: {
-              include: { materiel: true },
-            },
-            zone: {
-              include: { projet: { include: { contrat: true } } },
-            },
+            lignes: { include: { user: { include: { poste: true } } } },
+            affectationsMat: { include: { materiel: true } },
+            zone: { include: { projet: { include: { contrat: true } } } },
           },
         },
       },
@@ -116,6 +101,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(facture, { status: 201 });
   } catch (error: any) {
+    console.error("POST /api/facturation:", error.message);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
@@ -135,7 +121,6 @@ export async function PATCH(req: NextRequest) {
     if (notes !== undefined) data.notes = notes;
     if (dateEcheance) data.dateEcheance = new Date(dateEcheance);
 
-    // Recalcul si taux changés
     if (tauxTVA !== undefined || tauxRetenue !== undefined) {
       const tva = tauxTVA !== undefined ? parseFloat(tauxTVA) : current.tauxTVA;
       const retenue = tauxRetenue !== undefined ? parseFloat(tauxRetenue) : current.tauxRetenue;
@@ -158,6 +143,7 @@ export async function PATCH(req: NextRequest) {
 
     return NextResponse.json(facture);
   } catch (error: any) {
+    console.error("PATCH /api/facturation:", error.message);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
@@ -168,7 +154,6 @@ export async function DELETE(req: NextRequest) {
     const id = searchParams.get("id");
     if (!id) return NextResponse.json({ error: "ID manquant" }, { status: 400 });
 
-    // Délier les feuilles avant suppression
     await db.feuilleRegie.updateMany({
       where: { factureId: id },
       data: { factureId: null },
@@ -177,6 +162,7 @@ export async function DELETE(req: NextRequest) {
     await db.facture.delete({ where: { id } });
     return NextResponse.json({ success: true });
   } catch (error: any) {
+    console.error("DELETE /api/facturation:", error.message);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

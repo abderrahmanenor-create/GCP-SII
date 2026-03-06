@@ -564,25 +564,48 @@ export default function NouvelleFeuillePage() {
                 </div>
               </div>
 
-              {/* Bouton sauvegarder */}
-              <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end", marginTop: "20px" }}>
-                <button
-                  onClick={() => router.push("/dashboard/pointage")}
-                  style={{ padding: "12px 24px", border: "1px solid #ddd", borderRadius: "8px", background: "white", cursor: "pointer", fontSize: "14px" }}
-                >
-                  Annuler
-                </button>
-                <button
-                  onClick={handleSave}
-                  disabled={saving}
-                  style={{ padding: "12px 32px", background: "#0070f3", color: "white", border: "none", borderRadius: "8px", cursor: "pointer", fontSize: "14px", fontWeight: "bold" }}
-                >
-                  {saving ? "Sauvegarde..." : "✓ Enregistrer la feuille"}
-                </button>
-              </div>
+              
             </div>
           )}
         </div>
+      </div>
+      {/* Bouton sauvegarder — toujours visible */}
+      <div style={{ 
+        display: "flex", gap: "12px", justifyContent: "flex-end", 
+        marginTop: "20px", 
+        background: "white", borderRadius: "10px", 
+        padding: "16px 20px", boxShadow: "0 1px 6px rgba(0,0,0,0.08)" 
+      }}>
+        <div style={{ flex: 1, fontSize: "13px", color: "#666", alignSelf: "center" }}>
+          {lignesMO.length > 0 || lignesMat.length > 0 ? (
+            <span>
+              <strong style={{ color: "#0070f3" }}>{lignesMO.length} employé{lignesMO.length > 1 ? "s" : ""}</strong>
+              {lignesMat.length > 0 && <span> · <strong style={{ color: "#f59e0b" }}>{lignesMat.length} matériel{lignesMat.length > 1 ? "s" : ""}</strong></span>}
+              {" · "}
+              <strong style={{ color: "#10b981" }}>Total : {totalHT.toFixed(2)} DH HT</strong>
+            </span>
+          ) : (
+            <span style={{ color: "#ccc" }}>Aucun élément ajouté</span>
+          )}
+        </div>
+        <button
+          onClick={() => router.push("/dashboard/pointage")}
+          style={{ padding: "10px 20px", border: "1px solid #ddd", borderRadius: "8px", background: "white", cursor: "pointer", fontSize: "14px" }}
+        >
+          Annuler
+        </button>
+        <button
+          onClick={handleSave}
+          disabled={saving || (!lignesMO.length && !lignesMat.length) || !zoneId}
+          style={{ 
+            padding: "10px 28px", 
+            background: saving || (!lignesMO.length && !lignesMat.length) || !zoneId ? "#ccc" : "#0070f3", 
+            color: "white", border: "none", borderRadius: "8px", cursor: "pointer", 
+            fontSize: "14px", fontWeight: "bold" 
+          }}
+        >
+          {saving ? "Sauvegarde..." : "✓ Enregistrer la feuille"}
+        </button>
       </div>
     </div>
   );

@@ -12,33 +12,33 @@ datasource db {
 // ==========================================
 
 model RefPoste {
-  id        String   @id @default(uuid())
-  nom       String   @unique
-  actif     Boolean  @default(true)
-  users     User[]
-  tarifs    TarifContrat[]
+  id     String         @id @default(uuid())
+  nom    String         @unique
+  actif  Boolean        @default(true)
+  users  User[]
+  tarifs TarifContrat[]
 }
 
 model RefTypeContrat {
-  id        String   @id @default(uuid())
-  nom       String   @unique
-  actif     Boolean  @default(true)
-  users     User[]
+  id    String  @id @default(uuid())
+  nom   String  @unique
+  actif Boolean @default(true)
+  users User[]
 }
 
 model RefTypeHabilitation {
-  id        String        @id @default(uuid())
-  nom       String        @unique
-  dureeValiditeMois Int   @default(12)
-  actif     Boolean       @default(true)
-  habilitations Habilitation[]
+  id                String         @id @default(uuid())
+  nom               String         @unique
+  dureeValiditeMois Int            @default(12)
+  actif             Boolean        @default(true)
+  habilitations     Habilitation[]
 }
 
 model RefCategorieEPI {
-  id        String   @id @default(uuid())
-  nom       String   @unique
-  actif     Boolean  @default(true)
-  epis      EPI[]
+  id    String  @id @default(uuid())
+  nom   String  @unique
+  actif Boolean @default(true)
+  epis  EPI[]
 }
 
 model RefCategoriesMateriel {
@@ -49,18 +49,18 @@ model RefCategoriesMateriel {
 }
 
 model RefMotifAbsence {
-  id        String   @id @default(uuid())
-  nom       String   @unique
-  paye      Boolean  @default(false)
-  actif     Boolean  @default(true)
+  id    String  @id @default(uuid())
+  nom   String  @unique
+  paye  Boolean @default(false)
+  actif Boolean @default(true)
 }
 
 model RefCodePointage {
-  id        String   @id @default(uuid())
-  code      String   @unique
-  libelle   String
+  id         String  @id @default(uuid())
+  code       String  @unique
+  libelle    String
   facturable Boolean @default(true)
-  actif     Boolean  @default(true)
+  actif      Boolean @default(true)
 }
 
 // ==========================================
@@ -68,34 +68,35 @@ model RefCodePointage {
 // ==========================================
 
 model Societe {
-  id       String   @id @default(uuid())
-  nom      String
-  type     String   // "CLIENT", "SOUS_TRAITANT", "INTERNE"
-  ice      String?
-  email    String?
-  tel      String?
-  adresse  String?
-  actif    Boolean  @default(true)
-  users    User[]
-  contrats Contrat[]
-  createdAt DateTime @default(now())
+  id        String    @id @default(uuid())
+  nom       String
+  type      String // "CLIENT", "SOUS_TRAITANT", "INTERNE"
+  ice       String?
+  email     String?
+  tel       String?
+  adresse   String?
+  actif     Boolean   @default(true)
+  users     User[]
+  contrats  Contrat[]
+  createdAt DateTime  @default(now())
+  factures  Facture[]
 }
 
 model Contrat {
-  id                String   @id @default(uuid())
-  numero            String   @unique
+  id                String         @id @default(uuid())
+  numero            String         @unique
   objet             String
   budget            Float
   dateDebut         DateTime
   dateFin           DateTime?
-  statut            String   @default("ACTIF")
-  validationRequise Boolean  @default(true)
+  statut            String         @default("ACTIF")
+  validationRequise Boolean        @default(true)
   clientId          String
-  client            Societe  @relation(fields: [clientId], references: [id])
+  client            Societe        @relation(fields: [clientId], references: [id])
   projets           Projet[]
   factures          Facture[]
-  createdAt         DateTime @default(now())
-  tarifs    TarifContrat[]
+  createdAt         DateTime       @default(now())
+  tarifs            TarifContrat[]
 }
 
 model Projet {
@@ -111,15 +112,15 @@ model Projet {
 }
 
 model Zone {
-  id               String               @id @default(uuid())
-  nom              String
-  projetId         String
-  projet           Projet               @relation(fields: [projetId], references: [id])
-  feuillesRegie    FeuilleRegie[]
-  presences        PresenceSite[]
-  rapports         RapportChantier[]
-  affectations     AffectationMateriel[]
-  createdAt        DateTime             @default(now())
+  id            String                @id @default(uuid())
+  nom           String
+  projetId      String
+  projet        Projet                @relation(fields: [projetId], references: [id])
+  feuillesRegie FeuilleRegie[]
+  presences     PresenceSite[]
+  rapports      RapportChantier[]
+  affectations  AffectationMateriel[]
+  createdAt     DateTime              @default(now())
 }
 
 model Equipe {
@@ -136,73 +137,74 @@ model Equipe {
 // ==========================================
 
 model User {
-  id               String          @id @default(uuid())
-  email            String          @unique
-  password         String
-  nom              String
-  prenom           String
-  role             String          @default("OUVRIER")
-  statut           String          @default("ACTIF")
-  createdAt        DateTime        @default(now())
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  nom       String
+  prenom    String
+  role      String   @default("OUVRIER")
+  statut    String   @default("ACTIF")
+  createdAt DateTime @default(now())
 
   // Données administratives
-  matricule        String?         @unique
-  cin              String?
-  cnss             String?
-  telephone        String?
-  photoUrl         String?
+  matricule String? @unique
+  cin       String?
+  cnss      String?
+  telephone String?
+  photoUrl  String?
 
   // Contrat salarié
-  tauxHoraire      Float?
-  salaireBase      Float?
+  tauxHoraire        Float?
+  salaireBase        Float?
   indemniteTransport Float?
-  autreIndemnite   Float?
-  dateDebutContrat DateTime?
-  dateFinContrat   DateTime?
+  autreIndemnite     Float?
+  dateDebutContrat   DateTime?
+  dateFinContrat     DateTime?
 
   // Références dynamiques
-  posteId          String?
-  poste            RefPoste?       @relation(fields: [posteId], references: [id])
-  typeContratId    String?
-  typeContrat      RefTypeContrat? @relation(fields: [typeContratId], references: [id])
+  posteId       String?
+  poste         RefPoste?       @relation(fields: [posteId], references: [id])
+  typeContratId String?
+  typeContrat   RefTypeContrat? @relation(fields: [typeContratId], references: [id])
 
   // Appartenance
-  societeId        String?
-  societe          Societe?        @relation(fields: [societeId], references: [id])
-  equipeId         String?
-  equipe           Equipe?         @relation(fields: [equipeId], references: [id])
+  societeId String?
+  societe   Societe? @relation(fields: [societeId], references: [id])
+  equipeId  String?
+  equipe    Equipe?  @relation(fields: [equipeId], references: [id])
 
   // Relations
-  habilitations    Habilitation[]
-  epiDistribues    DistributionEPI[]
-  presences        PresenceSite[]
-  lignesRegie      LigneRegie[]
-  commentaires     Commentaire[]
-  documents        DocumentRH[]
+  habilitations     Habilitation[]
+  epiDistribues     DistributionEPI[]
+  presences         PresenceSite[]
+  lignesRegie       LigneRegie[]
+  commentaires      Commentaire[]
+  documents         DocumentRH[]
+  presencesJournalieres  PresenceJournaliere[]
   // Documents
-  cinUrl           String?
-  cnssUrl          String?
-  contratUrl       String?
+  cinUrl            String?
+  cnssUrl           String?
+  contratUrl        String?
   // Documents supplémentaires
-  visiteMedicaleUrl  String?
-  ribUrl             String?
-  adresse            String?
-  dateEmbauche       DateTime?
-  salaire            Float?
-  photo              String?
+  visiteMedicaleUrl String?
+  ribUrl            String?
+  adresse           String?
+  dateEmbauche      DateTime?
+  salaire           Float?
+  photo             String?
 }
 
 model Habilitation {
-  id          String              @id @default(uuid())
-  dateObtention DateTime          @default(now())
-  dateFin     DateTime
-  document    String?
-  statut      String              @default("VALIDE")
-  userId      String
-  user        User                @relation(fields: [userId], references: [id])
-  typeId      String
-  type        RefTypeHabilitation @relation(fields: [typeId], references: [id])
-  createdAt   DateTime            @default(now())
+  id            String              @id @default(uuid())
+  dateObtention DateTime            @default(now())
+  dateFin       DateTime
+  document      String?
+  statut        String              @default("VALIDE")
+  userId        String
+  user          User                @relation(fields: [userId], references: [id])
+  typeId        String
+  type          RefTypeHabilitation @relation(fields: [typeId], references: [id])
+  createdAt     DateTime            @default(now())
 }
 
 // ==========================================
@@ -233,21 +235,21 @@ model PresenceSite {
 // ==========================================
 
 model FeuilleRegie {
-  id              String       @id @default(uuid())
-  date            DateTime
-  semaine         Int
-  mois            Int
-  annee           Int
-  statut          String       @default("BROUILLON") // BROUILLON, SOUMIS, VALIDE_CHEF, VALIDE_CLIENT
-  totalHeures     Float        @default(0)
-  totalCoutMO     Float        @default(0)
-  totalCoutMat    Float        @default(0)
-  totalGeneral    Float        @default(0)
+  id           String   @id @default(uuid())
+  date         DateTime
+  semaine      Int
+  mois         Int
+  annee        Int
+  statut       String   @default("BROUILLON") // BROUILLON, SOUMIS, VALIDE_CHEF, VALIDE_CLIENT
+  totalHeures  Float    @default(0)
+  totalCoutMO  Float    @default(0)
+  totalCoutMat Float    @default(0)
+  totalGeneral Float    @default(0)
 
   // Validation chef
-  valideChefId    String?
-  dateValidChef   DateTime?
-  
+  valideChefId  String?
+  dateValidChef DateTime?
+
   // Validation client
   valideClientId  String?
   dateValidClient DateTime?
@@ -255,11 +257,13 @@ model FeuilleRegie {
   scanSignature   String?
 
   zoneId          String
-  zone            Zone         @relation(fields: [zoneId], references: [id])
+  zone            Zone                  @relation(fields: [zoneId], references: [id])
   lignes          LigneRegie[]
   affectationsMat AffectationMateriel[]
   rapports        RapportChantier[]
-  createdAt       DateTime     @default(now())
+  factureId       String?
+  facture         Facture?              @relation(fields: [factureId], references: [id])
+  createdAt       DateTime              @default(now())
 }
 
 model LigneRegie {
@@ -283,7 +287,7 @@ model LigneRegie {
 model RapportChantier {
   id           String        @id @default(uuid())
   date         DateTime
-  type         String        // JOURNALIER, HEBDOMADAIRE, MENSUEL, MENSUEL_VALORISE
+  type         String // JOURNALIER, HEBDOMADAIRE, MENSUEL, MENSUEL_VALORISE
   titre        String
   description  String?
   photos       String[]
@@ -304,72 +308,72 @@ model RapportChantier {
 // ==========================================
 
 model EPI {
-  id              String          @id @default(uuid())
-  nom             String
-  reference       String?
-  marque          String?
-  taille          String?
-  norme           String?         // EN 397, EN 361, EN 20345...
-  categorieSec    String          @default("II") // I, II, III
-  stockInitial    Int             @default(0)
-  stockActuel     Int             @default(0)
-  seuilAlerte     Int             @default(5)
-  prixUnitaire    Float?
-  
+  id           String  @id @default(uuid())
+  nom          String
+  reference    String?
+  marque       String?
+  taille       String?
+  norme        String? // EN 397, EN 361, EN 20345...
+  categorieSec String  @default("II") // I, II, III
+  stockInitial Int     @default(0)
+  stockActuel  Int     @default(0)
+  seuilAlerte  Int     @default(5)
+  prixUnitaire Float?
+
   // Durée de vie réglementaire
-  dureeVieAns     Int?            // ex: 5 pour harnais
-  nbLavagesMax    Int?            // ex: 25 pour gilets HV
-  
+  dureeVieAns  Int? // ex: 5 pour harnais
+  nbLavagesMax Int? // ex: 25 pour gilets HV
+
   // VGP (Vérification Générale Périodique)
-  vgpRequise      Boolean         @default(false)
-  vgpPeriodeMois  Int?            @default(12) // en mois
-  
-  datePeremption  DateTime?       // si date fixe fabricant
-  
-  categorieId     String?
-  categorie       RefCategorieEPI? @relation(fields: [categorieId], references: [id])
-  mouvements      MouvementEPI[]
-  distributions   DistributionEPI[]
-  createdAt       DateTime        @default(now())
+  vgpRequise     Boolean @default(false)
+  vgpPeriodeMois Int?    @default(12) // en mois
+
+  datePeremption DateTime? // si date fixe fabricant
+
+  categorieId   String?
+  categorie     RefCategorieEPI?  @relation(fields: [categorieId], references: [id])
+  mouvements    MouvementEPI[]
+  distributions DistributionEPI[]
+  createdAt     DateTime          @default(now())
 }
 
 model MouvementEPI {
-  id        String   @id @default(uuid())
-  type      String   // ENTREE, SORTIE, PERTE, RETOUR
-  quantite  Int
-  date      DateTime @default(now())
-  motif     String?
-  epiId     String
-  epi       EPI      @relation(fields: [epiId], references: [id])
+  id       String   @id @default(uuid())
+  type     String // ENTREE, SORTIE, PERTE, RETOUR
+  quantite Int
+  date     DateTime @default(now())
+  motif    String?
+  epiId    String
+  epi      EPI      @relation(fields: [epiId], references: [id])
 }
 
 model DistributionEPI {
-  id                  String    @id @default(uuid())
-  date                DateTime  @default(now())
-  quantite            Int       @default(1)
-  etat                String    @default("NEUF") // NEUF, BON, USE, ENDOMMAGE
-  taille              String?
-  
+  id       String   @id @default(uuid())
+  date     DateTime @default(now())
+  quantite Int      @default(1)
+  etat     String   @default("NEUF") // NEUF, BON, USE, ENDOMMAGE
+  taille   String?
+
   // Dates importantes
-  dateMiseEnService   DateTime? @default(now())
-  datePeremption      DateTime? // calculée auto selon dureeVieAns
-  dateProchVGP        DateTime? // prochaine VGP si requise
-  dateDerniereVGP     DateTime?
-  dateRetour          DateTime?
-  
+  dateMiseEnService DateTime? @default(now())
+  datePeremption    DateTime? // calculée auto selon dureeVieAns
+  dateProchVGP      DateTime? // prochaine VGP si requise
+  dateDerniereVGP   DateTime?
+  dateRetour        DateTime?
+
   // Statut
-  statut              String    @default("ACTIF") // ACTIF, RETOURNE, PERDU, REFORME
-  motifReforme        String?
-  
+  statut       String  @default("ACTIF") // ACTIF, RETOURNE, PERDU, REFORME
+  motifReforme String?
+
   // Signature récépissé
-  remarque            String?
-  signatureRecipisse  String?
-  
-  epiId               String
-  epi                 EPI       @relation(fields: [epiId], references: [id])
-  userId              String
-  user                User      @relation(fields: [userId], references: [id])
-  createdAt           DateTime  @default(now())
+  remarque           String?
+  signatureRecipisse String?
+
+  epiId     String
+  epi       EPI      @relation(fields: [epiId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
 }
 
 // ==========================================
@@ -377,36 +381,36 @@ model DistributionEPI {
 // ==========================================
 
 model Materiel {
-  id                  String                @id @default(uuid())
-  nom                 String
-  code                String                @unique
-  numeroSerie         String?
-  proprietaire        String                @default("INTERNE")
-  statut              String                @default("OPERATIONNEL")
-  coutJournalier      Float?
-  prixLocationJour    Float?
-  categorieId         String?
-  categorie           RefCategoriesMateriel? @relation(fields: [categorieId], references: [id])
+  id               String                 @id @default(uuid())
+  nom              String
+  code             String                 @unique
+  numeroSerie      String?
+  proprietaire     String                 @default("INTERNE")
+  statut           String                 @default("OPERATIONNEL")
+  coutJournalier   Float?
+  prixLocationJour Float?
+  categorieId      String?
+  categorie        RefCategoriesMateriel? @relation(fields: [categorieId], references: [id])
 
   // Documents JESA
-  attestationElectrique   String?
-  dateAttestElec          DateTime?
-  certificatLevage        String?
-  dateCertLevage          DateTime?
-  ficheControleOutillage  String?
-  dateControleOutillage   DateTime?
-  carnetBord              String?
-  dateCarnetBord          DateTime?
-  ficheEPI                String?
+  attestationElectrique  String?
+  dateAttestElec         DateTime?
+  certificatLevage       String?
+  dateCertLevage         DateTime?
+  ficheControleOutillage String?
+  dateControleOutillage  DateTime?
+  carnetBord             String?
+  dateCarnetBord         DateTime?
+  ficheEPI               String?
 
   // Prochaines inspections
-  prochaineInspElec     DateTime?
-  prochaineInspLevage   DateTime?
+  prochaineInspElec      DateTime?
+  prochaineInspLevage    DateTime?
   prochaineInspOutillage DateTime?
 
-  affectations        AffectationMateriel[]
-  tarifs              TarifContrat[]
-  createdAt           DateTime              @default(now())
+  affectations AffectationMateriel[]
+  tarifs       TarifContrat[]
+  createdAt    DateTime              @default(now())
 }
 
 model AffectationMateriel {
@@ -429,19 +433,6 @@ model AffectationMateriel {
 // FACTURATION
 // ==========================================
 
-model Facture {
-  id         String   @id @default(uuid())
-  numero     String   @unique
-  date       DateTime @default(now())
-  montantHT  Float
-  tva        Float    @default(20)
-  montantTTC Float
-  statut     String   @default("BROUILLON")
-  contratId  String
-  contrat    Contrat  @relation(fields: [contratId], references: [id])
-  createdAt  DateTime @default(now())
-}
-
 model CoutProjet {
   id          String   @id @default(uuid())
   categorie   String
@@ -457,15 +448,16 @@ model CoutProjet {
 // ==========================================
 
 model Commentaire {
-  id          String    @id @default(uuid())
-  contenu     String
-  entite      String    // "RAPPORT", "EMPLOYE", "MATERIEL", etc.
-  entiteId    String
-  auteurId    String
-  auteur      User      @relation(fields: [auteurId], references: [id])
-  rapport     RapportChantier? @relation(fields: [entiteId], references: [id])
-  createdAt   DateTime  @default(now())
+  id        String           @id @default(uuid())
+  contenu   String
+  entite    String // "RAPPORT", "EMPLOYE", "MATERIEL", etc.
+  entiteId  String
+  auteurId  String
+  auteur    User             @relation(fields: [auteurId], references: [id])
+  rapport   RapportChantier? @relation(fields: [entiteId], references: [id])
+  createdAt DateTime         @default(now())
 }
+
 model TarifContrat {
   id          String    @id @default(uuid())
   contratId   String
@@ -480,15 +472,52 @@ model TarifContrat {
   unite       String    @default("HEURE")
   createdAt   DateTime  @default(now())
 }
+
 model DocumentRH {
-  id          String   @id @default(uuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id])
-  type        String   // "CIN", "CNSS", "CONTRAT", "DIPLOME", "VISITE_MEDICALE", "CACES", "HABILITATION", "AUTRE"
-  nom         String
-  url         String
-  taille      Int?
-  expiration  DateTime?
-  remarque    String?
-  createdAt   DateTime @default(now())
+  id         String    @id @default(uuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id])
+  type       String // "CIN", "CNSS", "CONTRAT", "DIPLOME", "VISITE_MEDICALE", "CACES", "HABILITATION", "AUTRE"
+  nom        String
+  url        String
+  taille     Int?
+  expiration DateTime?
+  remarque   String?
+  createdAt  DateTime  @default(now())
+}
+
+model Facture {
+  id             String         @id @default(uuid())
+  numero         String         @unique
+  statut         String         @default("BROUILLON")
+  dateEmission   DateTime       @default(now())
+  dateEcheance   DateTime?
+  clientId       String
+  client         Societe        @relation(fields: [clientId], references: [id])
+  totalHT        Float          @default(0)
+  tauxTVA        Float          @default(20)
+  montantTVA     Float          @default(0)
+  tauxRetenue    Float          @default(0)
+  montantRetenue Float          @default(0)
+  totalTTC       Float          @default(0)
+  netAPayer      Float          @default(0)
+  notes          String?
+  feuilles       FeuilleRegie[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  Contrat        Contrat?       @relation(fields: [contratId], references: [id])
+  contratId      String?
+}
+model PresenceJournaliere {
+  id            String   @id @default(uuid())
+  date          DateTime
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  statut        String   @default("PRESENT") // PRESENT, ABSENT, CONGE, MISSION, ARRET_MALADIE, RETARD
+  heureArrivee  String?  // "08:00"
+  heureDepart   String?  // "17:00"
+  remarque      String?
+  createdAt     DateTime @default(now())
+
+  @@unique([userId, date])
 }

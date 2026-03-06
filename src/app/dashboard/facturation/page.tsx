@@ -64,8 +64,8 @@ export default function FacturationPage() {
   const loadAll = async () => {
     const [facturesRes, feuillesRes, clientsRes] = await Promise.all([
       fetch("/api/facturation").then(r => r.json()),
-      fetch("/api/pointage/regie/liste").then(r => r.json()),
-      fetch("/api/admin/clients").then(r => r.json()),
+      fetch("/api/pointage/regie").then(r => r.json()),
+      fetch("/api/admin/societes").then(r => r.json()),
     ]);
     setFactures(Array.isArray(facturesRes) ? facturesRes : []);
     setFeuilles(Array.isArray(feuillesRes) ? feuillesRes.filter((f: Feuille) => f.statut === "VALIDE_CLIENT" && !f.factureId) : []);
