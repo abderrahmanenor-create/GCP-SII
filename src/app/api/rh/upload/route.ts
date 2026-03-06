@@ -1,11 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { v2 as cloudinary } from "cloudinary";
-
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
 
 export async function POST(req: NextRequest) {
   try {
@@ -18,27 +11,34 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Fichier et userId obligatoires" }, { status: 400 });
     }
 
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
+    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+    const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
 
-    const result = await new Promise<any>((resolve, reject) => {
-      cloudinary.uploader.upload_stream(
-        {
-          folder: `gcp-sii/rh/${userId}`,
-          resource_type: "auto",
-          public_id: `${type}_${Date.now()}`,
-        },
-        (error, result) => {
-          if (error) reject(error);
-          else resolve(result);
-        }
-      ).end(buffer);
-    });
+    if (!cloudName || !uploadPreset) {
+      return NextResponse.json({ error: "Cloudinary non configuré" }, { status: 500 });
+    }
+
+    const fd = new FormData();
+    fd.append("file", file);
+    fd.append("upload_preset", uploadPreset);
+    fd.append("folder", `gcp-sii/rh/${userId}`);
+    fd.append("public_id", `${type}_${Date.now()}`);
+
+    const res = await fetch(
+      `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`,
+      { method: "POST", body: fd }
+    );
+
+    const data = await res.json();
+
+    if (!data.secure_url) {
+      return NextResponse.json({ error: data.error?.message || "Upload échoué" }, { status: 500 });
+    }
 
     return NextResponse.json({
-      url: result.secure_url,
-      taille: result.bytes,
-      format: result.format,
+      url: data.secure_url,
+      taille: data.bytes,
+      format: data.format,
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
