@@ -513,11 +513,20 @@ model PresenceJournaliere {
   date          DateTime
   userId        String
   user          User     @relation(fields: [userId], references: [id])
-  statut        String   @default("PRESENT") // PRESENT, ABSENT, CONGE, MISSION, ARRET_MALADIE, RETARD
-  heureArrivee  String?  // "08:00"
-  heureDepart   String?  // "17:00"
+  statut        String   @default("PRESENT")
+  heureArrivee  String?
+  heureDepart   String?
   remarque      String?
+  
+  // Validation workflow
+  statutFiche   String   @default("BROUILLON") // BROUILLON, VALIDE_CHEF, VALIDE_RH
+  valideChefId  String?
+  dateValideChef DateTime?
+  valideRHId    String?
+  dateValideRH  DateTime?
+  
   createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   @@unique([userId, date])
 }
