@@ -1,88 +1,116 @@
-import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 
-export async function POST(req: Request) {
-  try {
-    const body = await req.json();
-    const { userId, typeId, dateFin, dateObtention, document } = body;
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const search = searchParams.get("search") || "";
+  const statut = searchParams.get("statut") || "";
+  const posteId = searchParams.get("posteId") || "";
 
-    if (!userId || !typeId || !dateFin) {
-      return NextResponse.json(
-        { error: "userId, typeId et dateFin sont obligatoires" },
-        { status: 400 }
-      );
-    }
+  const where: any = {};
+  if (statut) where.statut = statut;
+  if (posteId) where.posteId = posteId;
+  if (search) {
+    where.OR = [
+      { nom: { contains: search, mode: "insensitive" } },
+      { prenom: { contains: search, mode: "insensitive" } },
+      { matricule: { contains: search, mode: "insensitive" } },
+      { cin: { contains: search, mode: "insensitive" } },
+    ];
+  }
 
-    const habilitation = await db.habilitation.create({
-      data: {
-        userId,
-        typeId,
-        dateFin: new Date(dateFin),
-        dateObtention: dateObtention ? new Date(dateObtention) : new Date(),
-        document: document || null,
-        statut: "VALIDE",
+  const users = await prisma.user.findMany({
+    where,
+    include: {
+      poste: true,
+      habilitations: {
+        include: { typeHabilitation: true },
+        orderBy: { dateExpiration: "asc" },
       },
-      include: {
-        type: true,
-        user: {
-          select: { id: true, nom: true, prenom: true }
+      distributions: {
+        where: { statut: "ACTIF" },
+        include: { epi: true },
+      },
+      lignesRegie: {
+        take: 1,
+        orderBy: { createdAt: "desc" },
+        include: {
+          feuilleRegie: {
+            include: {
+              zone: { include: { projet: true } },
+            },
+          },
         },
       },
-    });
+    },
+    orderBy: [{ statut: "asc" }, { nom: "asc" }],
+  });
 
-    return NextResponse.json(habilitation);
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  return NextResponse.json(users);
 }
 
-export async function GET(req: Request) {
-  try {
-    const { searchParams } = new URL(req.url);
-    const userId = searchParams.get("userId");
-    const expireSoon = searchParams.get("expireSoon");
+export async function POST(req: NextRequest) {
+  const body = await req.json();
+  const {
+    nom, prenom, email, matricule, cin, telephone,
+    posteId, role, statut, dateEmbauche, salaire,
+    adresse, photo,
+  } = body;
 
-    let where: any = {};
-
-    if (userId) {
-      where.userId = userId;
-    }
-
-    if (expireSoon === "true") {
-      const in30days = new Date();
-      in30days.setDate(in30days.getDate() + 30);
-      where.dateFin = { lte: in30days };
-    }
-
-    const habilitations = await db.habilitation.findMany({
-      where,
-      include: {
-        type: true,
-        user: {
-          select: { id: true, nom: true, prenom: true, matricule: true }
-        },
-      },
-      orderBy: { dateFin: "asc" },
-    });
-
-    return NextResponse.json(habilitations);
-  } catch (error) {
-    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+  if (!nom || !prenom) {
+    return NextResponse.json({ error: "Nom et prénom obligatoires" }, { status: 400 });
   }
+
+  const user = await prisma.user.create({
+    data: {
+      nom, prenom,
+      email: email || null,
+      matricule: matricule || null,
+      cin: cin || null,
+      telephone: telephone || null,
+      posteId: posteId || null,
+      role: role || "OUVRIER",
+      statut: statut || "ACTIF",
+      dateEmbauche: dateEmbauche ? new Date(dateEmbauche) : null,
+      salaire: salaire ? parseFloat(salaire) : null,
+      adresse: adresse || null,
+      photo: photo || null,
+    },
+    include: { poste: true },
+  });
+
+  return NextResponse.json(user, { status: 201 });
 }
 
-export async function DELETE(req: Request) {
-  try {
-    const { searchParams } = new URL(req.url);
-    const id = searchParams.get("id");
+export async function PATCH(req: NextRequest) {
+  const body = await req.json();
+  const { id, ...data } = body;
 
-    if (!id) {
-      return NextResponse.json({ error: "id obligatoire" }, { status: 400 });
-    }
+  if (!id) return NextResponse.json({ error: "ID manquant" }, { status: 400 });
 
-    await db.habilitation.delete({ where: { id } });
-    return NextResponse.json({ success: true });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  if (data.dateEmbauche) data.dateEmbauche = new Date(data.dateEmbauche);
+  if (data.salaire) data.salaire = parseFloat(data.salaire);
+  if (data.salaire === "") data.salaire = null;
+
+  const user = await prisma.user.update({
+    where: { id },
+    data,
+    include: { poste: true },
+  });
+
+  return NextResponse.json(user);
+}
+
+export async function DELETE(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const id = searchParams.get("id");
+  if (!id) return NextResponse.json({ error: "ID manquant" }, { status: 400 });
+
+  // Soft delete — on archive plutôt que supprimer
+  await prisma.user.update({
+    where: { id },
+    data: { statut: "INACTIF" },
+  });
+
+  return NextResponse.json({ success: true });
 }
