@@ -26,9 +26,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const navLinks = [
     { href: "/dashboard", label: "Accueil", icon: "🏠", exact: true },
-    { href: "/dashboard/rh", label: "RH & Ouvriers", icon: "👥" },
+    { href: "/dashboard/rh", label: "RH & Ouvriers", icon: "👷" },
     { href: "/dashboard/pointage", label: "Pointage", icon: "⏱️" },
-    { href: "/dashboard/epi/stock",  label: "🦺 HSE & EPI",  active: pathname.startsWith("/dashboard/epi")},
+    { href: "/dashboard/facturation", label: "Facturation", icon: "🧾" },
+    { href: "/dashboard/epi/stock", label: "HSE & EPI", icon: "🦺" },
     { href: "/dashboard/chantier", label: "Chantiers", icon: "🏗️" },
     { href: "/dashboard/admin", label: "Administration", icon: "⚙️" },
   ];
