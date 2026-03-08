@@ -120,6 +120,7 @@ model Zone {
   presences     PresenceSite[]
   rapports      RapportChantier[]
   affectations  AffectationMateriel[]
+  presencesJournalieres PresenceJournaliere[]
   createdAt     DateTime              @default(now())
 }
 
@@ -129,6 +130,7 @@ model Equipe {
   projetId  String
   projet    Projet   @relation(fields: [projetId], references: [id])
   membres   User[]
+  presencesJournalieres PresenceJournaliere[]
   createdAt DateTime @default(now())
 }
 
@@ -509,24 +511,37 @@ model Facture {
   contratId      String?
 }
 model PresenceJournaliere {
-  id            String   @id @default(uuid())
-  date          DateTime
-  userId        String
-  user          User     @relation(fields: [userId], references: [id])
-  statut        String   @default("PRESENT")
-  heureArrivee  String?
-  heureDepart   String?
-  remarque      String?
-  
-  // Validation workflow
-  statutFiche   String   @default("BROUILLON") // BROUILLON, VALIDE_CHEF, VALIDE_RH
-  valideChefId  String?
-  dateValideChef DateTime?
-  valideRHId    String?
-  dateValideRH  DateTime?
-  
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id           String   @id @default(uuid())
+  date         DateTime
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
 
-  @@unique([userId, date])
+  // Shift
+  shift        String   @default("JOUR") // JOUR, NUIT, RAMADAN
+  heureDebutShift String @default("07:00")
+  heureFinShift   String @default("19:00")
+
+  // Présence
+  statut       String   @default("PRESENT")
+  heureArrivee String?
+  heureDepart  String?
+  remarque     String?
+
+  // Affectation
+  zoneId       String?
+  zone         Zone?    @relation(fields: [zoneId], references: [id])
+  equipeId     String?
+  equipe       Equipe?  @relation(fields: [equipeId], references: [id])
+
+  // Validation workflow
+  statutFiche    String    @default("BROUILLON")
+  valideChefId   String?
+  dateValideChef DateTime?
+  valideRHId     String?
+  dateValideRH   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, date, shift])
 }
