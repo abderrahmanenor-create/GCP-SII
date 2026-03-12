@@ -1,0 +1,3 @@
+module.exports=[72639,a=>{"use strict";var b=a.i(87924);function c(){return(0,b.jsxs)("div",{style:{padding:"20px"},children:[(0,b.jsx)("h1",{children:"Module HSE & EPI"}),(0,b.jsx)("p",{children:"Gestion des Équipements de Protection Individuelle."}),(0,b.jsx)("div",{style:{marginTop:"20px",padding:"20px",border:"1px dashed #ccc",borderRadius:"8px",textAlign:"center"},children:"Interface de gestion EPI en cours de construction..."})]})}a.s(["default",()=>c])}];
+
+//# sourceMappingURL=src_app_dashboard_epi_page_tsx_db6f277a._.js.map

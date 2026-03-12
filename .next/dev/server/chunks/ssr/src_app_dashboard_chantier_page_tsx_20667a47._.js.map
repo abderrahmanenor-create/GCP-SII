@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 4, "column": 0}, "map": {"version":3,"sources":["file:///C:/gcp-sii/src/app/dashboard/chantier/page.tsx"],"sourcesContent":["\"use client\";\r\n\r\nexport default function ChantierPage() {\r\n  return (\r\n    <div style={{ padding: \"20px\" }}>\r\n      <h1>Module Gestion de Chantier</h1>\r\n      <p>Liste des projets, zones et contrats.</p>\r\n      \r\n      {/* Plus tard on ajoutera la liste des chantiers ici */}\r\n      <div style={{ marginTop: \"20px\", padding: \"20px\", border: \"1px dashed #ccc\", borderRadius: \"8px\", textAlign: \"center\" }}>\r\n        Interface de gestion des chantiers en cours de construction...\r\n      </div>\r\n    </div>\r\n  );\r\n}"],"names":[],"mappings":";;;;;AAAA;;AAEe,SAAS;IACtB,qBACE,8OAAC;QAAI,OAAO;YAAE,SAAS;QAAO;;0BAC5B,8OAAC;0BAAG;;;;;;0BACJ,8OAAC;0BAAE;;;;;;0BAGH,8OAAC;gBAAI,OAAO;oBAAE,WAAW;oBAAQ,SAAS;oBAAQ,QAAQ;oBAAmB,cAAc;oBAAO,WAAW;gBAAS;0BAAG;;;;;;;;;;;;AAK/H"}}]
+}

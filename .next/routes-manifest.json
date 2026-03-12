@@ -1,0 +1,401 @@
+{
+  "version": 3,
+  "pages404": true,
+  "appType": "app",
+  "caseSensitive": false,
+  "basePath": "",
+  "redirects": [
+    {
+      "source": "/:path+/",
+      "destination": "/:path+",
+      "internal": true,
+      "priority": true,
+      "statusCode": 308,
+      "regex": "^(?:/((?:[^/]+?)(?:/(?:[^/]+?))*))/$"
+    }
+  ],
+  "headers": [],
+  "rewrites": {
+    "beforeFiles": [],
+    "afterFiles": [],
+    "fallback": []
+  },
+  "dynamicRoutes": [
+    {
+      "page": "/api/admin/contrats/[id]/tarifs",
+      "regex": "^/api/admin/contrats/([^/]+?)/tarifs(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/admin/contrats/(?<nxtPid>[^/]+?)/tarifs(?:/)?$"
+    },
+    {
+      "page": "/api/auth/[...nextauth]",
+      "regex": "^/api/auth/(.+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPnextauth": "nxtPnextauth"
+      },
+      "namedRegex": "^/api/auth/(?<nxtPnextauth>.+?)(?:/)?$"
+    },
+    {
+      "page": "/api/facturation/[id]",
+      "regex": "^/api/facturation/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/facturation/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/api/pointage/regie/[id]",
+      "regex": "^/api/pointage/regie/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/pointage/regie/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/api/users/[id]",
+      "regex": "^/api/users/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/users/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/dashboard/admin/contrats/[id]/tarifs",
+      "regex": "^/dashboard/admin/contrats/([^/]+?)/tarifs(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/dashboard/admin/contrats/(?<nxtPid>[^/]+?)/tarifs(?:/)?$"
+    },
+    {
+      "page": "/dashboard/facturation/[id]",
+      "regex": "^/dashboard/facturation/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/dashboard/facturation/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/dashboard/pointage/presence/[date]",
+      "regex": "^/dashboard/pointage/presence/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPdate": "nxtPdate"
+      },
+      "namedRegex": "^/dashboard/pointage/presence/(?<nxtPdate>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/dashboard/pointage/regie/[id]",
+      "regex": "^/dashboard/pointage/regie/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/dashboard/pointage/regie/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/dashboard/rh/[id]",
+      "regex": "^/dashboard/rh/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/dashboard/rh/(?<nxtPid>[^/]+?)(?:/)?$"
+    }
+  ],
+  "staticRoutes": [
+    {
+      "page": "/",
+      "regex": "^/(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/(?:/)?$"
+    },
+    {
+      "page": "/_global-error",
+      "regex": "^/_global\\-error(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/_global\\-error(?:/)?$"
+    },
+    {
+      "page": "/_not-found",
+      "regex": "^/_not\\-found(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/_not\\-found(?:/)?$"
+    },
+    {
+      "page": "/api/admin/contrats",
+      "regex": "^/api/admin/contrats(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/admin/contrats(?:/)?$"
+    },
+    {
+      "page": "/api/admin/materiel",
+      "regex": "^/api/admin/materiel(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/admin/materiel(?:/)?$"
+    },
+    {
+      "page": "/api/admin/projets",
+      "regex": "^/api/admin/projets(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/admin/projets(?:/)?$"
+    },
+    {
+      "page": "/api/admin/societes",
+      "regex": "^/api/admin/societes(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/admin/societes(?:/)?$"
+    },
+    {
+      "page": "/api/dashboard",
+      "regex": "^/api/dashboard(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/dashboard(?:/)?$"
+    },
+    {
+      "page": "/api/epi/distribution",
+      "regex": "^/api/epi/distribution(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/epi/distribution(?:/)?$"
+    },
+    {
+      "page": "/api/epi/stock",
+      "regex": "^/api/epi/stock(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/epi/stock(?:/)?$"
+    },
+    {
+      "page": "/api/equipes",
+      "regex": "^/api/equipes(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/equipes(?:/)?$"
+    },
+    {
+      "page": "/api/facturation",
+      "regex": "^/api/facturation(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/facturation(?:/)?$"
+    },
+    {
+      "page": "/api/pointage/presence",
+      "regex": "^/api/pointage/presence(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/pointage/presence(?:/)?$"
+    },
+    {
+      "page": "/api/pointage/rapport",
+      "regex": "^/api/pointage/rapport(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/pointage/rapport(?:/)?$"
+    },
+    {
+      "page": "/api/pointage/regie",
+      "regex": "^/api/pointage/regie(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/pointage/regie(?:/)?$"
+    },
+    {
+      "page": "/api/presence",
+      "regex": "^/api/presence(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/presence(?:/)?$"
+    },
+    {
+      "page": "/api/presence/rapport",
+      "regex": "^/api/presence/rapport(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/presence/rapport(?:/)?$"
+    },
+    {
+      "page": "/api/presence/veille",
+      "regex": "^/api/presence/veille(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/presence/veille(?:/)?$"
+    },
+    {
+      "page": "/api/ref",
+      "regex": "^/api/ref(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/ref(?:/)?$"
+    },
+    {
+      "page": "/api/rh",
+      "regex": "^/api/rh(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/rh(?:/)?$"
+    },
+    {
+      "page": "/api/rh/documents",
+      "regex": "^/api/rh/documents(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/rh/documents(?:/)?$"
+    },
+    {
+      "page": "/api/rh/habilitations",
+      "regex": "^/api/rh/habilitations(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/rh/habilitations(?:/)?$"
+    },
+    {
+      "page": "/api/rh/upload",
+      "regex": "^/api/rh/upload(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/rh/upload(?:/)?$"
+    },
+    {
+      "page": "/api/upload",
+      "regex": "^/api/upload(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/upload(?:/)?$"
+    },
+    {
+      "page": "/api/users",
+      "regex": "^/api/users(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/users(?:/)?$"
+    },
+    {
+      "page": "/api/zones",
+      "regex": "^/api/zones(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/zones(?:/)?$"
+    },
+    {
+      "page": "/dashboard",
+      "regex": "^/dashboard(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard(?:/)?$"
+    },
+    {
+      "page": "/dashboard/admin",
+      "regex": "^/dashboard/admin(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/admin(?:/)?$"
+    },
+    {
+      "page": "/dashboard/admin/contrats",
+      "regex": "^/dashboard/admin/contrats(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/admin/contrats(?:/)?$"
+    },
+    {
+      "page": "/dashboard/admin/materiel",
+      "regex": "^/dashboard/admin/materiel(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/admin/materiel(?:/)?$"
+    },
+    {
+      "page": "/dashboard/admin/projets",
+      "regex": "^/dashboard/admin/projets(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/admin/projets(?:/)?$"
+    },
+    {
+      "page": "/dashboard/admin/societes",
+      "regex": "^/dashboard/admin/societes(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/admin/societes(?:/)?$"
+    },
+    {
+      "page": "/dashboard/chantier",
+      "regex": "^/dashboard/chantier(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/chantier(?:/)?$"
+    },
+    {
+      "page": "/dashboard/epi",
+      "regex": "^/dashboard/epi(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/epi(?:/)?$"
+    },
+    {
+      "page": "/dashboard/epi/distribution",
+      "regex": "^/dashboard/epi/distribution(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/epi/distribution(?:/)?$"
+    },
+    {
+      "page": "/dashboard/epi/stock",
+      "regex": "^/dashboard/epi/stock(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/epi/stock(?:/)?$"
+    },
+    {
+      "page": "/dashboard/facturation",
+      "regex": "^/dashboard/facturation(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/facturation(?:/)?$"
+    },
+    {
+      "page": "/dashboard/pointage",
+      "regex": "^/dashboard/pointage(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/pointage(?:/)?$"
+    },
+    {
+      "page": "/dashboard/pointage/presence",
+      "regex": "^/dashboard/pointage/presence(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/pointage/presence(?:/)?$"
+    },
+    {
+      "page": "/dashboard/pointage/rapport",
+      "regex": "^/dashboard/pointage/rapport(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/pointage/rapport(?:/)?$"
+    },
+    {
+      "page": "/dashboard/pointage/regie/liste",
+      "regex": "^/dashboard/pointage/regie/liste(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/pointage/regie/liste(?:/)?$"
+    },
+    {
+      "page": "/dashboard/pointage/regie/nouvelle",
+      "regex": "^/dashboard/pointage/regie/nouvelle(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/pointage/regie/nouvelle(?:/)?$"
+    },
+    {
+      "page": "/dashboard/rh",
+      "regex": "^/dashboard/rh(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/rh(?:/)?$"
+    },
+    {
+      "page": "/dashboard/rh/nouveau",
+      "regex": "^/dashboard/rh/nouveau(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/rh/nouveau(?:/)?$"
+    },
+    {
+      "page": "/favicon.ico",
+      "regex": "^/favicon\\.ico(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/favicon\\.ico(?:/)?$"
+    },
+    {
+      "page": "/login",
+      "regex": "^/login(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/login(?:/)?$"
+    }
+  ],
+  "dataRoutes": [],
+  "rsc": {
+    "header": "rsc",
+    "varyHeader": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+    "prefetchHeader": "next-router-prefetch",
+    "didPostponeHeader": "x-nextjs-postponed",
+    "contentTypeHeader": "text/x-component",
+    "suffix": ".rsc",
+    "prefetchSegmentHeader": "next-router-segment-prefetch",
+    "prefetchSegmentSuffix": ".segment.rsc",
+    "prefetchSegmentDirSuffix": ".segments",
+    "clientParamParsing": false,
+    "dynamicRSCPrerender": false
+  },
+  "rewriteHeaders": {
+    "pathHeader": "x-nextjs-rewritten-path",
+    "queryHeader": "x-nextjs-rewritten-query"
+  }
+}

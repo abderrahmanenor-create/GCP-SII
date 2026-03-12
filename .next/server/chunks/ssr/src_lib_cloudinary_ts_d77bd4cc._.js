@@ -1,0 +1,3 @@
+module.exports=[1039,a=>{"use strict";let b=async(a,b="gcp-sii")=>{let c=new FormData;c.append("file",a),c.append("upload_preset","gcp-sii-uploads"),c.append("folder",b);let d=await fetch("https://api.cloudinary.com/v1_1/dyszhc44j/auto/upload",{method:"POST",body:c});if(!d.ok)throw Error("Erreur upload fichier");return(await d.json()).secure_url};a.s(["uploadFile",0,b])}];
+
+//# sourceMappingURL=src_lib_cloudinary_ts_d77bd4cc._.js.map

@@ -1,0 +1,3 @@
+module.exports=[68613,a=>{"use strict";var b=a.i(87924);function c(){return(0,b.jsxs)("div",{style:{padding:"20px"},children:[(0,b.jsx)("h1",{children:"Module Gestion de Chantier"}),(0,b.jsx)("p",{children:"Liste des projets, zones et contrats."}),(0,b.jsx)("div",{style:{marginTop:"20px",padding:"20px",border:"1px dashed #ccc",borderRadius:"8px",textAlign:"center"},children:"Interface de gestion des chantiers en cours de construction..."})]})}a.s(["default",()=>c])}];
+
+//# sourceMappingURL=src_app_dashboard_chantier_page_tsx_20667a47._.js.map

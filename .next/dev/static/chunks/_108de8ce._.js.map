@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 4, "column": 0}, "map": {"version":3,"sources":["file:///C:/gcp-sii/src/app/page.tsx"],"sourcesContent":["\"use client\"\n\nimport { useRouter } from \"next/navigation\"\nimport { useEffect } from \"react\"\n\nexport default function Home() {\n  const router = useRouter()\n  useEffect(() => {\n    router.push(\"/login\")\n  }, [router])\n  return null\n}"],"names":[],"mappings":";;;;AAEA;AACA;;AAHA;;;AAKe,SAAS;;IACtB,MAAM,SAAS,IAAA,kJAAS;IACxB,IAAA,0KAAS;0BAAC;YACR,OAAO,IAAI,CAAC;QACd;yBAAG;QAAC;KAAO;IACX,OAAO;AACT;GANwB;;QACP,kJAAS;;;KADF"}},
+    {"offset": {"line": 40, "column": 0}, "map": {"version":3,"sources":["file:///C:/gcp-sii/node_modules/next/navigation.js"],"sourcesContent":["module.exports = require('./dist/client/components/navigation')\n"],"names":[],"mappings":"AAAA,OAAO,OAAO","ignoreList":[0]}}]
+}

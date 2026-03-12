@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 46, "column": 0}, "map": {"version":3,"sources":["file:///C:/gcp-sii/src/lib/db.ts"],"sourcesContent":["import { PrismaClient } from \"@prisma/client\"\r\n\r\nconst globalForPrisma = globalThis as unknown as {\r\n  prisma: PrismaClient | undefined\r\n}\r\n\r\nexport const db =\r\n  globalForPrisma.prisma ??\r\n  new PrismaClient()\r\n\r\nif (process.env.NODE_ENV !== \"production\") globalForPrisma.prisma = db"],"names":[],"mappings":";;;;AAAA;;AAEA,MAAM,kBAAkB;AAIjB,MAAM,KACX,gBAAgB,MAAM,IACtB,IAAI,sMAAY;AAElB,wCAA2C,gBAAgB,MAAM,GAAG"}},
+    {"offset": {"line": 59, "column": 0}, "map": {"version":3,"sources":["file:///C:/gcp-sii/src/app/api/equipes/route.ts"],"sourcesContent":["import { NextResponse } from \"next/server\";\r\nimport { db } from \"@/lib/db\";\r\n\r\nexport async function GET() {\r\n  try {\r\n    const equipes = await db.equipe.findMany({\r\n      include: { projet: { select: { nom: true } } },\r\n      orderBy: { nom: \"asc\" },\r\n    });\r\n    return NextResponse.json(equipes);\r\n  } catch (error: any) {\r\n    return NextResponse.json({ error: error.message }, { status: 500 });\r\n  }\r\n}"],"names":[],"mappings":";;;;AAAA;AACA;;;AAEO,eAAe;IACpB,IAAI;QACF,MAAM,UAAU,MAAM,wHAAE,CAAC,MAAM,CAAC,QAAQ,CAAC;YACvC,SAAS;gBAAE,QAAQ;oBAAE,QAAQ;wBAAE,KAAK;oBAAK;gBAAE;YAAE;YAC7C,SAAS;gBAAE,KAAK;YAAM;QACxB;QACA,OAAO,gJAAY,CAAC,IAAI,CAAC;IAC3B,EAAE,OAAO,OAAY;QACnB,OAAO,gJAAY,CAAC,IAAI,CAAC;YAAE,OAAO,MAAM,OAAO;QAAC,GAAG;YAAE,QAAQ;QAAI;IACnE;AACF"}}]
+}
