@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
@@ -12,53 +12,53 @@ datasource db {
 // ==========================================
 
 model RefPoste {
-  id     String         @id @default(uuid())
-  nom    String         @unique
+  id     String         @id @default(uuid()) @db.VarChar(36)
+  nom    String         @unique @db.VarChar(191)
   actif  Boolean        @default(true)
   users  User[]
   tarifs TarifContrat[]
 }
 
 model RefTypeContrat {
-  id    String  @id @default(uuid())
-  nom   String  @unique
+  id    String  @id @default(uuid()) @db.VarChar(36)
+  nom   String  @unique @db.VarChar(191)
   actif Boolean @default(true)
   users User[]
 }
 
 model RefTypeHabilitation {
-  id                String         @id @default(uuid())
-  nom               String         @unique
+  id                String         @id @default(uuid()) @db.VarChar(36)
+  nom               String         @unique @db.VarChar(191)
   dureeValiditeMois Int            @default(12)
   actif             Boolean        @default(true)
   habilitations     Habilitation[]
 }
 
 model RefCategorieEPI {
-  id    String  @id @default(uuid())
-  nom   String  @unique
+  id    String  @id @default(uuid()) @db.VarChar(36)
+  nom   String  @unique @db.VarChar(191)
   actif Boolean @default(true)
   epis  EPI[]
 }
 
 model RefCategoriesMateriel {
-  id        String     @id @default(uuid())
-  nom       String     @unique
+  id        String     @id @default(uuid()) @db.VarChar(36)
+  nom       String     @unique @db.VarChar(191)
   actif     Boolean    @default(true)
   materiels Materiel[]
 }
 
 model RefMotifAbsence {
-  id    String  @id @default(uuid())
-  nom   String  @unique
+  id    String  @id @default(uuid()) @db.VarChar(36)
+  nom   String  @unique @db.VarChar(191)
   paye  Boolean @default(false)
   actif Boolean @default(true)
 }
 
 model RefCodePointage {
-  id         String  @id @default(uuid())
-  code       String  @unique
-  libelle    String
+  id         String  @id @default(uuid()) @db.VarChar(36)
+  code       String  @unique @db.VarChar(191)
+  libelle    String  @db.VarChar(191)
   facturable Boolean @default(true)
   actif      Boolean @default(true)
 }
@@ -68,13 +68,13 @@ model RefCodePointage {
 // ==========================================
 
 model Societe {
-  id        String    @id @default(uuid())
-  nom       String
-  type      String // "CLIENT", "SOUS_TRAITANT", "INTERNE"
-  ice       String?
-  email     String?
-  tel       String?
-  adresse   String?
+  id        String    @id @default(uuid()) @db.VarChar(36)
+  nom       String    @db.VarChar(191)
+  type      String    @db.VarChar(50)
+  ice       String?   @db.VarChar(191)
+  email     String?   @db.VarChar(191)
+  tel       String?   @db.VarChar(50)
+  adresse   String?   @db.Text
   actif     Boolean   @default(true)
   users     User[]
   contrats  Contrat[]
@@ -83,15 +83,15 @@ model Societe {
 }
 
 model Contrat {
-  id                String         @id @default(uuid())
-  numero            String         @unique
-  objet             String
+  id                String         @id @default(uuid()) @db.VarChar(36)
+  numero            String         @unique @db.VarChar(191)
+  objet             String         @db.Text
   budget            Float
   dateDebut         DateTime
   dateFin           DateTime?
-  statut            String         @default("ACTIF")
+  statut            String         @default("ACTIF") @db.VarChar(50)
   validationRequise Boolean        @default(true)
-  clientId          String
+  clientId          String         @db.VarChar(36)
   client            Societe        @relation(fields: [clientId], references: [id])
   projets           Projet[]
   factures          Facture[]
@@ -100,10 +100,10 @@ model Contrat {
 }
 
 model Projet {
-  id        String       @id @default(uuid())
-  nom       String
-  code      String       @unique
-  contratId String
+  id        String       @id @default(uuid()) @db.VarChar(36)
+  nom       String       @db.VarChar(191)
+  code      String       @unique @db.VarChar(191)
+  contratId String       @db.VarChar(36)
   contrat   Contrat      @relation(fields: [contratId], references: [id])
   zones     Zone[]
   equipes   Equipe[]
@@ -112,26 +112,26 @@ model Projet {
 }
 
 model Zone {
-  id            String                @id @default(uuid())
-  nom           String
-  projetId      String
-  projet        Projet                @relation(fields: [projetId], references: [id])
-  feuillesRegie FeuilleRegie[]
-  presences     PresenceSite[]
-  rapports      RapportChantier[]
-  affectations  AffectationMateriel[]
+  id                    String                @id @default(uuid()) @db.VarChar(36)
+  nom                   String                @db.VarChar(191)
+  projetId              String                @db.VarChar(36)
+  projet                Projet                @relation(fields: [projetId], references: [id])
+  feuillesRegie         FeuilleRegie[]
+  presences             PresenceSite[]
+  rapports              RapportChantier[]
+  affectations          AffectationMateriel[]
   presencesJournalieres PresenceJournaliere[]
-  createdAt     DateTime              @default(now())
+  createdAt             DateTime              @default(now())
 }
 
 model Equipe {
-  id        String   @id @default(uuid())
-  nom       String
-  projetId  String
-  projet    Projet   @relation(fields: [projetId], references: [id])
-  membres   User[]
+  id                    String                @id @default(uuid()) @db.VarChar(36)
+  nom                   String                @db.VarChar(191)
+  projetId              String                @db.VarChar(36)
+  projet                Projet                @relation(fields: [projetId], references: [id])
+  membres               User[]
   presencesJournalieres PresenceJournaliere[]
-  createdAt DateTime @default(now())
+  createdAt             DateTime              @default(now())
 }
 
 // ==========================================
@@ -139,21 +139,21 @@ model Equipe {
 // ==========================================
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  nom       String
-  prenom    String
-  role      String   @default("OUVRIER")
-  statut    String   @default("ACTIF")
+  id        String   @id @default(uuid()) @db.VarChar(36)
+  email     String   @unique @db.VarChar(191)
+  password  String   @db.VarChar(191)
+  nom       String   @db.VarChar(191)
+  prenom    String   @db.VarChar(191)
+  role      String   @default("OUVRIER") @db.VarChar(50)
+  statut    String   @default("ACTIF") @db.VarChar(50)
   createdAt DateTime @default(now())
 
   // Données administratives
-  matricule String? @unique
-  cin       String?
-  cnss      String?
-  telephone String?
-  photoUrl  String?
+  matricule String? @unique @db.VarChar(191)
+  cin       String? @db.VarChar(191)
+  cnss      String? @db.VarChar(191)
+  telephone String? @db.VarChar(50)
+  photoUrl  String? @db.VarChar(500)
 
   // Contrat salarié
   tauxHoraire        Float?
@@ -164,47 +164,47 @@ model User {
   dateFinContrat     DateTime?
 
   // Références dynamiques
-  posteId       String?
+  posteId       String?         @db.VarChar(36)
   poste         RefPoste?       @relation(fields: [posteId], references: [id])
-  typeContratId String?
+  typeContratId String?         @db.VarChar(36)
   typeContrat   RefTypeContrat? @relation(fields: [typeContratId], references: [id])
 
   // Appartenance
-  societeId String?
+  societeId String?  @db.VarChar(36)
   societe   Societe? @relation(fields: [societeId], references: [id])
-  equipeId  String?
+  equipeId  String?  @db.VarChar(36)
   equipe    Equipe?  @relation(fields: [equipeId], references: [id])
 
   // Relations
-  habilitations     Habilitation[]
-  epiDistribues     DistributionEPI[]
-  presences         PresenceSite[]
-  lignesRegie       LigneRegie[]
-  commentaires      Commentaire[]
-  documents         DocumentRH[]
-  presencesJournalieres  PresenceJournaliere[]
+  habilitations         Habilitation[]
+  epiDistribues         DistributionEPI[]
+  presences             PresenceSite[]
+  lignesRegie           LigneRegie[]
+  commentaires          Commentaire[]
+  documents             DocumentRH[]
+  presencesJournalieres PresenceJournaliere[]
+
   // Documents
-  cinUrl            String?
-  cnssUrl           String?
-  contratUrl        String?
-  // Documents supplémentaires
-  visiteMedicaleUrl String?
-  ribUrl            String?
-  adresse           String?
+  cinUrl            String? @db.VarChar(500)
+  cnssUrl           String? @db.VarChar(500)
+  contratUrl        String? @db.VarChar(500)
+  visiteMedicaleUrl String? @db.VarChar(500)
+  ribUrl            String? @db.VarChar(500)
+  adresse           String? @db.Text
   dateEmbauche      DateTime?
   salaire           Float?
-  photo             String?
+  photo             String? @db.VarChar(500)
 }
 
 model Habilitation {
-  id            String              @id @default(uuid())
+  id            String              @id @default(uuid()) @db.VarChar(36)
   dateObtention DateTime            @default(now())
   dateFin       DateTime
-  document      String?
-  statut        String              @default("VALIDE")
-  userId        String
+  document      String?             @db.VarChar(500)
+  statut        String              @default("VALIDE") @db.VarChar(50)
+  userId        String              @db.VarChar(36)
   user          User                @relation(fields: [userId], references: [id])
-  typeId        String
+  typeId        String              @db.VarChar(36)
   type          RefTypeHabilitation @relation(fields: [typeId], references: [id])
   createdAt     DateTime            @default(now())
 }
@@ -214,18 +214,18 @@ model Habilitation {
 // ==========================================
 
 model PresenceSite {
-  id           String    @id @default(uuid())
+  id           String    @id @default(uuid()) @db.VarChar(36)
   date         DateTime
   heureArrivee DateTime?
   heureDepart  DateTime?
-  statut       String    @default("PRESENT") // PRESENT, ABSENT, CONGE, MALADIE
-  motifAbsence String?
-  note         String?
+  statut       String    @default("PRESENT") @db.VarChar(50)
+  motifAbsence String?   @db.VarChar(191)
+  note         String?   @db.Text
   valide       Boolean   @default(false)
-  valideParId  String?
-  userId       String
+  valideParId  String?   @db.VarChar(36)
+  userId       String    @db.VarChar(36)
   user         User      @relation(fields: [userId], references: [id])
-  zoneId       String?
+  zoneId       String?   @db.VarChar(36)
   zone         Zone?     @relation(fields: [zoneId], references: [id])
   createdAt    DateTime  @default(now())
 
@@ -237,47 +237,47 @@ model PresenceSite {
 // ==========================================
 
 model FeuilleRegie {
-  id           String   @id @default(uuid())
+  id           String   @id @default(uuid()) @db.VarChar(36)
   date         DateTime
   semaine      Int
   mois         Int
   annee        Int
-  statut       String   @default("BROUILLON") // BROUILLON, SOUMIS, VALIDE_CHEF, VALIDE_CLIENT
+  statut       String   @default("BROUILLON") @db.VarChar(50)
   totalHeures  Float    @default(0)
   totalCoutMO  Float    @default(0)
   totalCoutMat Float    @default(0)
   totalGeneral Float    @default(0)
 
   // Validation chef
-  valideChefId  String?
+  valideChefId  String?   @db.VarChar(36)
   dateValidChef DateTime?
 
   // Validation client
-  valideClientId  String?
+  valideClientId  String?   @db.VarChar(36)
   dateValidClient DateTime?
-  signatureUrl    String?
-  scanSignature   String?
+  signatureUrl    String?   @db.VarChar(500)
+  scanSignature   String?   @db.VarChar(500)
 
-  zoneId          String
+  zoneId          String                @db.VarChar(36)
   zone            Zone                  @relation(fields: [zoneId], references: [id])
   lignes          LigneRegie[]
   affectationsMat AffectationMateriel[]
   rapports        RapportChantier[]
-  factureId       String?
+  factureId       String?               @db.VarChar(36)
   facture         Facture?              @relation(fields: [factureId], references: [id])
   createdAt       DateTime              @default(now())
 }
 
 model LigneRegie {
-  id           String       @id @default(uuid())
+  id           String       @id @default(uuid()) @db.VarChar(36)
   heures       Float
   tauxHoraire  Float
   montant      Float
-  codePointage String?
-  note         String?
-  userId       String
+  codePointage String?      @db.VarChar(50)
+  note         String?      @db.Text
+  userId       String       @db.VarChar(36)
   user         User         @relation(fields: [userId], references: [id])
-  feuilleId    String
+  feuilleId    String       @db.VarChar(36)
   feuille      FeuilleRegie @relation(fields: [feuilleId], references: [id])
   createdAt    DateTime     @default(now())
 }
@@ -287,19 +287,19 @@ model LigneRegie {
 // ==========================================
 
 model RapportChantier {
-  id           String        @id @default(uuid())
+  id           String        @id @default(uuid()) @db.VarChar(36)
   date         DateTime
-  type         String // JOURNALIER, HEBDOMADAIRE, MENSUEL, MENSUEL_VALORISE
-  titre        String
-  description  String?
-  photos       String[]
-  statut       String        @default("BROUILLON")
+  type         String        @db.VarChar(50)
+  titre        String        @db.VarChar(191)
+  description  String?       @db.Text
+  photos       String?       @db.Text   // JSON array stocké en texte
+  statut       String        @default("BROUILLON") @db.VarChar(50)
   valideChef   Boolean       @default(false)
   valideClient Boolean       @default(false)
-  pdfUrl       String?
-  zoneId       String
+  pdfUrl       String?       @db.VarChar(500)
+  zoneId       String        @db.VarChar(36)
   zone         Zone          @relation(fields: [zoneId], references: [id])
-  feuilleId    String?
+  feuilleId    String?       @db.VarChar(36)
   feuille      FeuilleRegie? @relation(fields: [feuilleId], references: [id])
   commentaires Commentaire[]
   createdAt    DateTime      @default(now())
@@ -310,29 +310,27 @@ model RapportChantier {
 // ==========================================
 
 model EPI {
-  id           String  @id @default(uuid())
-  nom          String
-  reference    String?
-  marque       String?
-  taille       String?
-  norme        String? // EN 397, EN 361, EN 20345...
-  categorieSec String  @default("II") // I, II, III
+  id           String  @id @default(uuid()) @db.VarChar(36)
+  nom          String  @db.VarChar(191)
+  reference    String? @db.VarChar(191)
+  marque       String? @db.VarChar(191)
+  taille       String? @db.VarChar(50)
+  norme        String? @db.VarChar(191)
+  categorieSec String  @default("II") @db.VarChar(10)
   stockInitial Int     @default(0)
   stockActuel  Int     @default(0)
   seuilAlerte  Int     @default(5)
   prixUnitaire Float?
 
-  // Durée de vie réglementaire
-  dureeVieAns  Int? // ex: 5 pour harnais
-  nbLavagesMax Int? // ex: 25 pour gilets HV
+  dureeVieAns  Int?
+  nbLavagesMax Int?
 
-  // VGP (Vérification Générale Périodique)
   vgpRequise     Boolean @default(false)
-  vgpPeriodeMois Int?    @default(12) // en mois
+  vgpPeriodeMois Int?    @default(12)
 
-  datePeremption DateTime? // si date fixe fabricant
+  datePeremption DateTime?
 
-  categorieId   String?
+  categorieId   String?           @db.VarChar(36)
   categorie     RefCategorieEPI?  @relation(fields: [categorieId], references: [id])
   mouvements    MouvementEPI[]
   distributions DistributionEPI[]
@@ -340,72 +338,67 @@ model EPI {
 }
 
 model MouvementEPI {
-  id       String   @id @default(uuid())
-  type     String // ENTREE, SORTIE, PERTE, RETOUR
+  id       String   @id @default(uuid()) @db.VarChar(36)
+  type     String   @db.VarChar(50)
   quantite Int
   date     DateTime @default(now())
-  motif    String?
-  epiId    String
+  motif    String?  @db.VarChar(191)
+  epiId    String   @db.VarChar(36)
   epi      EPI      @relation(fields: [epiId], references: [id])
 }
 
 model DistributionEPI {
-  id       String   @id @default(uuid())
+  id       String   @id @default(uuid()) @db.VarChar(36)
   date     DateTime @default(now())
   quantite Int      @default(1)
-  etat     String   @default("NEUF") // NEUF, BON, USE, ENDOMMAGE
-  taille   String?
+  etat     String   @default("NEUF") @db.VarChar(50)
+  taille   String?  @db.VarChar(50)
 
-  // Dates importantes
   dateMiseEnService DateTime? @default(now())
-  datePeremption    DateTime? // calculée auto selon dureeVieAns
-  dateProchVGP      DateTime? // prochaine VGP si requise
+  datePeremption    DateTime?
+  dateProchVGP      DateTime?
   dateDerniereVGP   DateTime?
   dateRetour        DateTime?
 
-  // Statut
-  statut       String  @default("ACTIF") // ACTIF, RETOURNE, PERDU, REFORME
-  motifReforme String?
+  statut       String  @default("ACTIF") @db.VarChar(50)
+  motifReforme String? @db.VarChar(191)
 
-  // Signature récépissé
-  remarque           String?
-  signatureRecipisse String?
+  remarque           String? @db.Text
+  signatureRecipisse String? @db.Text
 
-  epiId     String
+  epiId     String   @db.VarChar(36)
   epi       EPI      @relation(fields: [epiId], references: [id])
-  userId    String
+  userId    String   @db.VarChar(36)
   user      User     @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
 }
 
 // ==========================================
-// MATÉRIEL JESA
+// MATÉRIEL
 // ==========================================
 
 model Materiel {
-  id               String                 @id @default(uuid())
-  nom              String
-  code             String                 @unique
-  numeroSerie      String?
-  proprietaire     String                 @default("INTERNE")
-  statut           String                 @default("OPERATIONNEL")
+  id               String                 @id @default(uuid()) @db.VarChar(36)
+  nom              String                 @db.VarChar(191)
+  code             String                 @unique @db.VarChar(191)
+  numeroSerie      String?                @db.VarChar(191)
+  proprietaire     String                 @default("INTERNE") @db.VarChar(50)
+  statut           String                 @default("OPERATIONNEL") @db.VarChar(50)
   coutJournalier   Float?
   prixLocationJour Float?
-  categorieId      String?
+  categorieId      String?                @db.VarChar(36)
   categorie        RefCategoriesMateriel? @relation(fields: [categorieId], references: [id])
 
-  // Documents JESA
-  attestationElectrique  String?
+  attestationElectrique  String?   @db.VarChar(500)
   dateAttestElec         DateTime?
-  certificatLevage       String?
+  certificatLevage       String?   @db.VarChar(500)
   dateCertLevage         DateTime?
-  ficheControleOutillage String?
+  ficheControleOutillage String?   @db.VarChar(500)
   dateControleOutillage  DateTime?
-  carnetBord             String?
+  carnetBord             String?   @db.VarChar(500)
   dateCarnetBord         DateTime?
-  ficheEPI               String?
+  ficheEPI               String?   @db.VarChar(500)
 
-  // Prochaines inspections
   prochaineInspElec      DateTime?
   prochaineInspLevage    DateTime?
   prochaineInspOutillage DateTime?
@@ -416,17 +409,17 @@ model Materiel {
 }
 
 model AffectationMateriel {
-  id            String        @id @default(uuid())
+  id            String        @id @default(uuid()) @db.VarChar(36)
   dateDebut     DateTime
   dateFin       DateTime?
   joursFactures Int           @default(0)
   montant       Float         @default(0)
   valideClient  Boolean       @default(false)
-  materielId    String
+  materielId    String        @db.VarChar(36)
   materiel      Materiel      @relation(fields: [materielId], references: [id])
-  zoneId        String
+  zoneId        String        @db.VarChar(36)
   zone          Zone          @relation(fields: [zoneId], references: [id])
-  feuilleId     String?
+  feuilleId     String?       @db.VarChar(36)
   feuille       FeuilleRegie? @relation(fields: [feuilleId], references: [id])
   createdAt     DateTime      @default(now())
 }
@@ -436,65 +429,61 @@ model AffectationMateriel {
 // ==========================================
 
 model CoutProjet {
-  id          String   @id @default(uuid())
-  categorie   String
+  id          String   @id @default(uuid()) @db.VarChar(36)
+  categorie   String   @db.VarChar(191)
   montant     Float
   date        DateTime @default(now())
-  description String?
-  projetId    String
+  description String?  @db.Text
+  projetId    String   @db.VarChar(36)
   projet      Projet   @relation(fields: [projetId], references: [id])
 }
 
-// ==========================================
-// COMMENTAIRES (SYSTÈME GLOBAL)
-// ==========================================
-
 model Commentaire {
-  id        String           @id @default(uuid())
-  contenu   String
-  entite    String // "RAPPORT", "EMPLOYE", "MATERIEL", etc.
-  entiteId  String
-  auteurId  String
+  id        String           @id @default(uuid()) @db.VarChar(36)
+  contenu   String           @db.Text
+  entite    String           @db.VarChar(50)
+  entiteId  String           @db.VarChar(36)
+  auteurId  String           @db.VarChar(36)
   auteur    User             @relation(fields: [auteurId], references: [id])
   rapport   RapportChantier? @relation(fields: [entiteId], references: [id])
   createdAt DateTime         @default(now())
 }
 
 model TarifContrat {
-  id          String    @id @default(uuid())
-  contratId   String
+  id          String    @id @default(uuid()) @db.VarChar(36)
+  contratId   String    @db.VarChar(36)
   contrat     Contrat   @relation(fields: [contratId], references: [id])
-  type        String
-  posteId     String?
+  type        String    @db.VarChar(50)
+  posteId     String?   @db.VarChar(36)
   poste       RefPoste? @relation(fields: [posteId], references: [id])
-  materielId  String?
+  materielId  String?   @db.VarChar(36)
   materiel    Materiel? @relation(fields: [materielId], references: [id])
   tauxFacture Float
   tauxRevient Float?
-  unite       String    @default("HEURE")
+  unite       String    @default("HEURE") @db.VarChar(50)
   createdAt   DateTime  @default(now())
 }
 
 model DocumentRH {
-  id         String    @id @default(uuid())
-  userId     String
+  id         String    @id @default(uuid()) @db.VarChar(36)
+  userId     String    @db.VarChar(36)
   user       User      @relation(fields: [userId], references: [id])
-  type       String // "CIN", "CNSS", "CONTRAT", "DIPLOME", "VISITE_MEDICALE", "CACES", "HABILITATION", "AUTRE"
-  nom        String
-  url        String
+  type       String    @db.VarChar(50)
+  nom        String    @db.VarChar(191)
+  url        String    @db.VarChar(500)
   taille     Int?
   expiration DateTime?
-  remarque   String?
+  remarque   String?   @db.Text
   createdAt  DateTime  @default(now())
 }
 
 model Facture {
-  id             String         @id @default(uuid())
-  numero         String         @unique
-  statut         String         @default("BROUILLON")
+  id             String         @id @default(uuid()) @db.VarChar(36)
+  numero         String         @unique @db.VarChar(191)
+  statut         String         @default("BROUILLON") @db.VarChar(50)
   dateEmission   DateTime       @default(now())
   dateEcheance   DateTime?
-  clientId       String
+  clientId       String         @db.VarChar(36)
   client         Societe        @relation(fields: [clientId], references: [id])
   totalHT        Float          @default(0)
   tauxTVA        Float          @default(20)
@@ -503,45 +492,46 @@ model Facture {
   montantRetenue Float          @default(0)
   totalTTC       Float          @default(0)
   netAPayer      Float          @default(0)
-  notes          String?
+  notes          String?        @db.Text
   feuilles       FeuilleRegie[]
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
   Contrat        Contrat?       @relation(fields: [contratId], references: [id])
-  contratId      String?
+  contratId      String?        @db.VarChar(36)
 }
+
+// ==========================================
+// PRÉSENCE JOURNALIÈRE
+// ==========================================
+
 model PresenceJournaliere {
-  id           String   @id @default(uuid())
-  date         DateTime
-  userId       String
-  user         User     @relation(fields: [userId], references: [id])
+  id              String    @id @default(uuid()) @db.VarChar(36)
+  date            DateTime
+  userId          String    @db.VarChar(36)
+  user            User      @relation(fields: [userId], references: [id])
 
-  // Shift
-  shift        String   @default("JOUR") // JOUR, NUIT, RAMADAN
-  heureDebutShift String @default("07:00")
-  heureFinShift   String @default("19:00")
+  shift           String    @default("JOUR") @db.VarChar(20)
+  heureDebutShift String    @default("07:00") @db.VarChar(10)
+  heureFinShift   String    @default("19:00") @db.VarChar(10)
 
-  // Présence
-  statut       String   @default("PRESENT")
-  heureArrivee String?
-  heureDepart  String?
-  remarque     String?
+  statut          String    @default("PRESENT") @db.VarChar(50)
+  heureArrivee    String?   @db.VarChar(10)
+  heureDepart     String?   @db.VarChar(10)
+  remarque        String?   @db.Text
 
-  // Affectation
-  zoneId       String?
-  zone         Zone?    @relation(fields: [zoneId], references: [id])
-  equipeId     String?
-  equipe       Equipe?  @relation(fields: [equipeId], references: [id])
+  zoneId          String?   @db.VarChar(36)
+  zone            Zone?     @relation(fields: [zoneId], references: [id])
+  equipeId        String?   @db.VarChar(36)
+  equipe          Equipe?   @relation(fields: [equipeId], references: [id])
 
-  // Validation workflow
-  statutFiche    String    @default("BROUILLON")
-  valideChefId   String?
-  dateValideChef DateTime?
-  valideRHId     String?
-  dateValideRH   DateTime?
+  statutFiche     String    @default("BROUILLON") @db.VarChar(50)
+  valideChefId    String?   @db.VarChar(36)
+  dateValideChef  DateTime?
+  valideRHId      String?   @db.VarChar(36)
+  dateValideRH    DateTime?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   @@unique([userId, date, shift])
 }
